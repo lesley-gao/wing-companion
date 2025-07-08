@@ -96,8 +96,8 @@ This implementation plan provides a step-by-step approach to building the Flight
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
 | TASK-025 | Create FlightCompanion.tsx component with TypeScript interfaces, MUI components, and Tailwind styling | ✅ | 2025-07-08 |
-| TASK-026 | Create Pickup.tsx component with TypeScript interfaces and consistent design system | | |
-| TASK-027 | Build reusable UI components: Card.tsx, Button.tsx, Input.tsx, Modal.tsx with MUI base and Tailwind styling | | |
+| TASK-026 | Create Pickup.tsx component with TypeScript interfaces and consistent design system | ✅ | 2025-07-08 |
+| TASK-027 | Build reusable UI components: Card.tsx, Button.tsx, Input.tsx, Modal.tsx with MUI base and Tailwind styling | ✅ | 2025-07-08 |
 | TASK-028 | Create Storybook stories for all components with different states, props, and theme variations | | |
 | TASK-029 | Implement UserProfile.tsx component with form validation using React Hook Form and Zod | | |
 | TASK-030 | Create Navigation.tsx component with theme toggle button and responsive design | | |
