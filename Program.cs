@@ -1,96 +1,91 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 using NetworkingApp.Data;
+using NetworkingApp.Middleware;
+using NetworkingApp.Filters;
+using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using NetworkingApp.Models;
+using NetworkingApp.Data.SeedData;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
+// Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add Identity services
-builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
+builder.Services.AddControllers(options =>
 {
-    // Password settings
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 6;
-    
-    // User settings
-    options.User.RequireUniqueEmail = true;
-    options.SignIn.RequireConfirmedEmail = false;
+    // Add global model validation filter
+    options.Filters.Add<ValidateModelStateFilter>();
 })
-.AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
-
-// Add controllers and API services
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+.ConfigureApiBehaviorOptions(options =>
+{
+    // Disable default model validation response to use our custom filter
+    options.SuppressModelStateInvalidFilter = true;
+})
+.AddJsonOptions(options =>
+{
+    // Configure JSON serialization
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.WriteIndented = builder.Environment.IsDevelopment();
+});
 
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 
-// Add CORS for React frontend
+// Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("ReactApp", policy =>
+    options.AddDefaultPolicy(policy =>
     {
         policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
-              .AllowAnyHeader()
               .AllowAnyMethod()
+              .AllowAnyHeader()
               .AllowCredentials();
     });
 });
 
-var app = builder.Build();
-
-// Create database and tables if they don't exist
-using (var scope = app.Services.CreateScope())
+// Add API Explorer for development
+if (builder.Environment.IsDevelopment())
 {
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    
-    // Ensure database is created
-    context.Database.EnsureCreated();
-    
-    // Seed data in development environment
-    if (app.Environment.IsDevelopment())
-    {
-        await NetworkingApp.Data.SeedData.DatabaseSeeder.SeedAsync(context, userManager, logger);
-        await NetworkingApp.Data.SeedData.DatabaseSeeder.SeedDevelopmentDataAsync(context, logger);
-    }
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
 }
 
-// Configure the HTTP request pipeline
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+
+// Add error handling middleware (should be one of the first middlewares)
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseDeveloperExceptionPage();
-}
-else
-{
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseRouting();
+app.UseCors();
 
-app.UseCors("ReactApp");
-
-app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// Serve React app
+// Serve static files and configure SPA fallback
+app.UseStaticFiles();
 app.MapFallbackToFile("index.html");
+
+// Seed database in development
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    await DatabaseSeeder.SeedAsync(context, userManager, logger);
+}
 
 app.Run();
