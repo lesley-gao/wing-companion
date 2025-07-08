@@ -52,7 +52,18 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    // Ensure database is created
     context.Database.EnsureCreated();
+    
+    // Seed data in development environment
+    if (app.Environment.IsDevelopment())
+    {
+        await NetworkingApp.Data.SeedData.DatabaseSeeder.SeedAsync(context, userManager, logger);
+        await NetworkingApp.Data.SeedData.DatabaseSeeder.SeedDevelopmentDataAsync(context, logger);
+    }
 }
 
 // Configure the HTTP request pipeline

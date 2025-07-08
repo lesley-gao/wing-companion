@@ -1,3 +1,4 @@
+// Enhanced FlightCompanionController.cs with validation
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NetworkingApp.Data;
@@ -5,6 +6,7 @@ using NetworkingApp.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations; 
 
 namespace NetworkingApp.Controllers
 {
@@ -46,6 +48,11 @@ namespace NetworkingApp.Controllers
         [HttpGet("requests/{id}")]
         public async Task<ActionResult<FlightCompanionRequest>> GetRequest(int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest("Invalid request ID.");
+            }
+
             var request = await _context.FlightCompanionRequests
                 .Include(fcr => fcr.User)
                 .Include(fcr => fcr.MatchedOffer)
@@ -53,7 +60,7 @@ namespace NetworkingApp.Controllers
 
             if (request == null)
             {
-                return NotFound();
+                return NotFound($"Flight companion request with ID {id} not found.");
             }
 
             return request;
@@ -63,6 +70,44 @@ namespace NetworkingApp.Controllers
         [HttpPost("requests")]
         public async Task<ActionResult<FlightCompanionRequest>> CreateRequest(FlightCompanionRequest request)
         {
+            // Validate model state
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Additional business validation
+            if (request.FlightDate <= DateTime.UtcNow)
+            {
+                ModelState.AddModelError("FlightDate", "Flight date must be in the future.");
+                return BadRequest(ModelState);
+            }
+
+            if (request.OfferedAmount < 0)
+            {
+                ModelState.AddModelError("OfferedAmount", "Offered amount cannot be negative.");
+                return BadRequest(ModelState);
+            }
+
+            // Validate airport codes
+            var validAirports = new[] { "AKL", "PVG", "SHA", "PEK", "CAN", "SZX", "WLG", "CHC" };
+            if (!validAirports.Contains(request.DepartureAirport?.ToUpper()))
+            {
+                ModelState.AddModelError("DepartureAirport", "Invalid departure airport code.");
+                return BadRequest(ModelState);
+            }
+
+            if (!validAirports.Contains(request.ArrivalAirport?.ToUpper()))
+            {
+                ModelState.AddModelError("ArrivalAirport", "Invalid arrival airport code.");
+                return BadRequest(ModelState);
+            }
+
+            // Set default values and timestamps
+            request.CreatedAt = DateTime.UtcNow;
+            request.IsActive = true;
+            request.IsMatched = false;
+
             _context.FlightCompanionRequests.Add(request);
             await _context.SaveChangesAsync();
 
@@ -73,6 +118,44 @@ namespace NetworkingApp.Controllers
         [HttpPost("offers")]
         public async Task<ActionResult<FlightCompanionOffer>> CreateOffer(FlightCompanionOffer offer)
         {
+            // Validate model state
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Additional business validation
+            if (offer.FlightDate <= DateTime.UtcNow)
+            {
+                ModelState.AddModelError("FlightDate", "Flight date must be in the future.");
+                return BadRequest(ModelState);
+            }
+
+            if (offer.RequestedAmount < 0)
+            {
+                ModelState.AddModelError("RequestedAmount", "Requested amount cannot be negative.");
+                return BadRequest(ModelState);
+            }
+
+            // Validate airport codes
+            var validAirports = new[] { "AKL", "PVG", "SHA", "PEK", "CAN", "SZX", "WLG", "CHC" };
+            if (!validAirports.Contains(offer.DepartureAirport?.ToUpper()))
+            {
+                ModelState.AddModelError("DepartureAirport", "Invalid departure airport code.");
+                return BadRequest(ModelState);
+            }
+
+            if (!validAirports.Contains(offer.ArrivalAirport?.ToUpper()))
+            {
+                ModelState.AddModelError("ArrivalAirport", "Invalid arrival airport code.");
+                return BadRequest(ModelState);
+            }
+
+            // Set default values and timestamps
+            offer.CreatedAt = DateTime.UtcNow;
+            offer.IsAvailable = true;
+            offer.HelpedCount = 0;
+
             _context.FlightCompanionOffers.Add(offer);
             await _context.SaveChangesAsync();
 
@@ -83,10 +166,15 @@ namespace NetworkingApp.Controllers
         [HttpGet("match/{requestId}")]
         public async Task<ActionResult<IEnumerable<FlightCompanionOffer>>> FindMatches(int requestId)
         {
+            if (requestId <= 0)
+            {
+                return BadRequest("Invalid request ID.");
+            }
+
             var request = await _context.FlightCompanionRequests.FindAsync(requestId);
             if (request == null)
             {
-                return NotFound();
+                return NotFound($"Flight companion request with ID {requestId} not found.");
             }
 
             // Find matching offers (same route and similar date)
@@ -106,14 +194,41 @@ namespace NetworkingApp.Controllers
         [HttpPut("match")]
         public async Task<IActionResult> MatchRequestWithOffer([FromBody] MatchRequest matchRequest)
         {
+            // Validate model state
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (matchRequest.RequestId <= 0 || matchRequest.OfferId <= 0)
+            {
+                return BadRequest("Invalid request ID or offer ID.");
+            }
+
             var request = await _context.FlightCompanionRequests.FindAsync(matchRequest.RequestId);
             var offer = await _context.FlightCompanionOffers.FindAsync(matchRequest.OfferId);
 
-            if (request == null || offer == null)
+            if (request == null)
             {
-                return NotFound();
+                return NotFound($"Flight companion request with ID {matchRequest.RequestId} not found.");
             }
 
+            if (offer == null)
+            {
+                return NotFound($"Flight companion offer with ID {matchRequest.OfferId} not found.");
+            }
+
+            if (request.IsMatched)
+            {
+                return BadRequest("Request is already matched.");
+            }
+
+            if (!offer.IsAvailable)
+            {
+                return BadRequest("Offer is no longer available.");
+            }
+
+            // Update match status
             request.IsMatched = true;
             request.MatchedOfferId = offer.Id;
             offer.HelpedCount++;
@@ -126,7 +241,10 @@ namespace NetworkingApp.Controllers
 
     public class MatchRequest
     {
+        [Range(1, int.MaxValue, ErrorMessage = "Request ID must be greater than 0.")]
         public int RequestId { get; set; }
+        
+        [Range(1, int.MaxValue, ErrorMessage = "Offer ID must be greater than 0.")]
         public int OfferId { get; set; }
     }
 }

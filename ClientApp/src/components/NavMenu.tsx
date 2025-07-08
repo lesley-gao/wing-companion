@@ -10,14 +10,15 @@ import {
   ListItemText,
   Box,
   useMediaQuery,
-  useTheme,
+  useTheme as useMuiTheme,
 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
+import { ThemeToggle } from './ThemeToggle';
 
 export const NavMenu: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const theme = useTheme();
+  const theme = useMuiTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
 
@@ -56,7 +57,7 @@ export const NavMenu: React.FC = () => {
 
   return (
     <>
-      <AppBar position="static" className="mb-4">
+      <AppBar position="static" className="mb-4 dark:bg-gray-800">
         <Toolbar>
           {isMobile && (
             <IconButton
@@ -107,6 +108,8 @@ export const NavMenu: React.FC = () => {
               ))}
             </Box>
           )}
+
+          <ThemeToggle />
         </Toolbar>
       </AppBar>
 
@@ -115,7 +118,7 @@ export const NavMenu: React.FC = () => {
         open={mobileOpen}
         onClose={handleDrawerToggle}
         ModalProps={{
-          keepMounted: true, // Better open performance on mobile.
+          keepMounted: true,
         }}
         sx={{
           display: { xs: 'block', md: 'none' },
