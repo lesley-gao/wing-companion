@@ -34,44 +34,16 @@ import {
   Person as PersonIcon,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { clearError } from '../store/slices/flightCompanionSlice';
+import { addNotification } from '../store/slices/uiSlice';
+import { 
+  fetchRequests, 
+  fetchOffers, 
+  createRequest,
+  type FlightCompanionRequest,
+  type FlightCompanionOffer 
+} from '../store/slices/flightCompanionSlice';
 
 // TypeScript Interfaces
-interface FlightCompanionRequest {
-  id: number;
-  userId: number;
-  flightNumber: string;
-  airline: string;
-  flightDate: string;
-  departureAirport: string;
-  arrivalAirport: string;
-  travelerName?: string;
-  travelerAge?: string;
-  specialNeeds?: string;
-  offeredAmount: number;
-  additionalNotes?: string;
-  isActive: boolean;
-  isMatched: boolean;
-  createdAt: string;
-}
-
-interface FlightCompanionOffer {
-  id: number;
-  userId: number;
-  flightNumber: string;
-  airline: string;
-  flightDate: string;
-  departureAirport: string;
-  arrivalAirport: string;
-  availableServices?: string;
-  languages?: string;
-  requestedAmount: number;
-  additionalInfo?: string;
-  isAvailable: boolean;
-  helpedCount: number;
-  createdAt: string;
-}
-
 interface RequestFormData {
   userId: number;
   flightNumber: string;
@@ -92,10 +64,7 @@ interface FlightCompanionProps {}
 const FlightCompanion: React.FC<FlightCompanionProps> = () => {
   // State Management
   const [activeTab, setActiveTab] = useState<number>(0);
-  const [requests, setRequests] = useState<FlightCompanionRequest[]>([]);
-  const [offers, setOffers] = useState<FlightCompanionOffer[]>([]);
   const [showCreateForm, setShowCreateForm] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -108,11 +77,25 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
 
   // Redux Integration
   const dispatch = useAppDispatch();
-  const { error } = useAppSelector((state) => state.flightCompanion);
+  const { user } = useAppSelector((state) => state.auth);
+  const { requests, offers, isLoading, error } = useAppSelector(state => state.flightCompanion);
+  
+  // Effects
+  useEffect(() => {
+    dispatch(fetchRequests());
+    dispatch(fetchOffers());
+  }, [dispatch]);
+
+  // Show error if it exists
+  useEffect(() => {
+    if (error) {
+      showSnackbar(error, 'error');
+    }
+  }, [error]);
 
   // Form Data
   const [formData, setFormData] = useState<RequestFormData>({
-    userId: 1, // Temporary - will be from auth context
+    userId: user?.id || 1,
     flightNumber: '',
     airline: '',
     flightDate: '',
@@ -138,50 +121,6 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
     { value: 'Adult', label: 'Adult' },
     { value: 'Young Adult', label: 'Young Adult' },
   ];
-
-  // Data Fetching
-  const fetchRequests = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/flightcompanion/requests');
-      if (!response.ok) throw new Error('Failed to fetch requests');
-      const data = await response.json();
-      setRequests(data);
-    } catch (error) {
-      console.error('Error fetching requests:', error);
-      showSnackbar('Error fetching requests', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchOffers = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/flightcompanion/offers');
-      if (!response.ok) throw new Error('Failed to fetch offers');
-      const data = await response.json();
-      setOffers(data);
-    } catch (error) {
-      console.error('Error fetching offers:', error);
-      showSnackbar('Error fetching offers', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Effects
-  useEffect(() => {
-    fetchRequests();
-    fetchOffers();
-  }, []);
-
-  useEffect(() => {
-    if (error) {
-      showSnackbar(error, 'error');
-      dispatch(clearError());
-    }
-  }, [error, dispatch]);
 
   // Event Handlers
   const handleTabChange = (event: React.SyntheticEvent, newValue: number): void => {
@@ -210,35 +149,49 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
     event.preventDefault();
     
     try {
-      setLoading(true);
-      const response = await fetch('/api/flightcompanion/requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          flightDate: new Date(formData.flightDate).toISOString(),
-        }),
-      });
+      // Create the request data without userId (it will be added by the backend)
+      const requestData = {
+        flightNumber: formData.flightNumber,
+        airline: formData.airline,
+        flightDate: formData.flightDate,
+        departureAirport: formData.departureAirport,
+        arrivalAirport: formData.arrivalAirport,
+        travelerName: formData.travelerName,
+        travelerAge: formData.travelerAge,
+        specialNeeds: formData.specialNeeds,
+        offeredAmount: Number(formData.offeredAmount),
+        additionalNotes: formData.additionalNotes,
+        userId: user?.id || 1,
+      };
 
-      if (!response.ok) throw new Error('Failed to create request');
+      // Dispatch Redux action to create request
+      const result = await dispatch(createRequest(requestData));
       
-      showSnackbar('Request created successfully!', 'success');
-      setShowCreateForm(false);
-      resetForm();
-      await fetchRequests();
+      if (createRequest.fulfilled.match(result)) {
+        dispatch(addNotification({
+          message: 'Flight companion request created successfully!',
+          type: 'success',
+        }));
+        
+        setShowCreateForm(false);
+        resetForm();
+      } else {
+        throw new Error(result.payload as string || 'Failed to create request');
+      }
     } catch (error) {
       console.error('Error creating request:', error);
-      showSnackbar('Error creating request', 'error');
-    } finally {
-      setLoading(false);
+      const errorMessage = error instanceof Error ? error.message : 'Error creating request';
+      showSnackbar(errorMessage, 'error');
+      dispatch(addNotification({
+        message: 'Failed to create flight companion request',
+        type: 'error',
+      }));
     }
   };
 
   const resetForm = (): void => {
     setFormData({
-      userId: 1,
+      userId: user?.id || 1,
       flightNumber: '',
       airline: '',
       flightDate: '',
@@ -250,6 +203,18 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
       offeredAmount: 0,
       additionalNotes: '',
     });
+  };
+
+  const handleContactTraveler = (request: FlightCompanionRequest): void => {
+    // Implementation for contacting traveler
+    console.log('Contacting traveler:', request);
+    showSnackbar('Contact feature coming soon!', 'info');
+  };
+
+  const handleContactHelper = (offer: FlightCompanionOffer): void => {
+    // Implementation for contacting helper
+    console.log('Contacting helper:', offer);
+    showSnackbar('Contact feature coming soon!', 'info');
   };
 
   const showSnackbar = (
@@ -335,6 +300,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
           size="small"
           startIcon={<ContactIcon />}
           className="bg-blue-600 hover:bg-blue-700"
+          onClick={() => handleContactTraveler(request)}
         >
           Contact
         </Button>
@@ -352,7 +318,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
         <Box className="flex justify-between items-start mb-3">
           <Box>
             <Typography variant="h6" className="flex items-center gap-2 text-gray-800 dark:text-white">
-              <FlightIcon color="primary" />
+              <PersonIcon color="primary" />
               {offer.flightNumber} - {offer.airline}
             </Typography>
             <Typography variant="body2" color="primary" className="font-medium">
@@ -361,7 +327,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
           </Box>
           <Chip
             label={`NZD $${offer.requestedAmount}`}
-            color="success"
+            color="primary"
             variant="filled"
             className="font-semibold"
           />
@@ -395,7 +361,8 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
           variant="contained"
           size="small"
           startIcon={<ContactIcon />}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-green-600 hover:bg-green-700"
+          onClick={() => handleContactHelper(offer)}
         >
           Contact Helper
         </Button>
@@ -409,76 +376,43 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
       onClose={() => setShowCreateForm(false)}
       maxWidth="md"
       fullWidth
-      className="z-50"
     >
-      <DialogTitle className="bg-primary-50 dark:bg-gray-800">
-        <Typography variant="h5" className="flex items-center gap-2">
-          <AddIcon />
-          Request Flight Companion Help
-        </Typography>
-      </DialogTitle>
-
       <form onSubmit={handleFormSubmit}>
-        <DialogContent className="space-y-4 pt-6">
-          <Grid container spacing={3}>
+        <DialogTitle>Request Flight Companion Help</DialogTitle>
+        <DialogContent className="space-y-4">
+          <Grid container spacing={2} className="mt-2">
             <Grid item xs={12} sm={6}>
               <TextField
                 name="flightNumber"
                 label="Flight Number"
                 value={formData.flightNumber}
                 onChange={handleInputChange}
-                placeholder="e.g., NZ289"
-                required
                 fullWidth
-                className="bg-white dark:bg-gray-700"
+                required
               />
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <TextField
                 name="airline"
                 label="Airline"
                 value={formData.airline}
                 onChange={handleInputChange}
-                placeholder="e.g., Air New Zealand"
-                required
                 fullWidth
-                className="bg-white dark:bg-gray-700"
+                required
               />
             </Grid>
-
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12}>
               <TextField
                 name="flightDate"
                 label="Flight Date"
                 type="datetime-local"
                 value={formData.flightDate}
                 onChange={handleInputChange}
-                required
                 fullWidth
+                required
                 InputLabelProps={{ shrink: true }}
-                className="bg-white dark:bg-gray-700"
               />
             </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Traveler Age</InputLabel>
-                <Select
-                  name="travelerAge"
-                  value={formData.travelerAge}
-                  onChange={handleSelectChange}
-                  label="Traveler Age"
-                >
-                  {travelerAgeOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth required>
                 <InputLabel>From Airport</InputLabel>
@@ -496,7 +430,6 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
                 </Select>
               </FormControl>
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth required>
                 <InputLabel>To Airport</InputLabel>
@@ -514,19 +447,43 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
                 </Select>
               </FormControl>
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <TextField
                 name="travelerName"
                 label="Traveler Name"
                 value={formData.travelerName}
                 onChange={handleInputChange}
-                placeholder="e.g., My parents"
                 fullWidth
-                className="bg-white dark:bg-gray-700"
               />
             </Grid>
-
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Traveler Age</InputLabel>
+                <Select
+                  name="travelerAge"
+                  value={formData.travelerAge}
+                  onChange={handleSelectChange}
+                  label="Traveler Age"
+                >
+                  {travelerAgeOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="specialNeeds"
+                label="Special Needs or Help Required"
+                value={formData.specialNeeds}
+                onChange={handleInputChange}
+                fullWidth
+                multiline
+                rows={3}
+              />
+            </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 name="offeredAmount"
@@ -534,59 +491,30 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
                 type="number"
                 value={formData.offeredAmount}
                 onChange={handleInputChange}
-                inputProps={{ min: 0, max: 500 }}
-                placeholder="50"
                 fullWidth
-                className="bg-white dark:bg-gray-700"
+                required
               />
             </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                name="specialNeeds"
-                label="Special Needs/Help Required"
-                value={formData.specialNeeds}
-                onChange={handleInputChange}
-                placeholder="e.g., Language translation, wheelchair assistance, airport navigation..."
-                multiline
-                rows={3}
-                fullWidth
-                className="bg-white dark:bg-gray-700"
-              />
-            </Grid>
-
             <Grid item xs={12}>
               <TextField
                 name="additionalNotes"
                 label="Additional Notes"
                 value={formData.additionalNotes}
                 onChange={handleInputChange}
-                placeholder="Any other information that might be helpful..."
+                fullWidth
                 multiline
                 rows={2}
-                fullWidth
-                className="bg-white dark:bg-gray-700"
               />
             </Grid>
           </Grid>
         </DialogContent>
-
-        <DialogActions className="bg-gray-50 dark:bg-gray-800 p-4">
-          <Button
-            onClick={() => setShowCreateForm(false)}
-            disabled={loading}
-            className="text-gray-600 hover:text-gray-800"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
+        <DialogActions>
+          <Button onClick={() => setShowCreateForm(false)}>Cancel</Button>
+          <Button 
+            type="submit" 
             variant="contained"
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
-            className="bg-green-600 hover:bg-green-700"
           >
-            {loading ? 'Creating...' : 'Create Request'}
+            Create Request
           </Button>
         </DialogActions>
       </form>
@@ -595,20 +523,13 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
 
   // Main Render
   return (
-    <Container maxWidth="lg" className="py-6">
+    <Container maxWidth="lg" className="py-8">
       {/* Header */}
       <Box className="text-center mb-8">
-        <Typography
-          variant="h3"
-          component="h1"
-          className="mb-4 font-bold text-gray-800 dark:text-white"
-        >
+        <Typography variant="h3" component="h1" className="font-bold text-gray-900 dark:text-white mb-4">
           Flight Companion Service
         </Typography>
-        <Typography
-          variant="h6"
-          className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
-        >
+        <Typography variant="body1" className="text-gray-600 dark:text-gray-300">
           Connect with fellow travelers to help each other during flights
         </Typography>
       </Box>
@@ -649,7 +570,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
 
       {/* Content */}
       <Box className="min-h-96">
-        {loading && !requests.length && !offers.length ? (
+        {isLoading && !requests.length && !offers.length ? (
           <Box className="flex justify-center items-center py-12">
             <CircularProgress size={40} />
           </Box>
