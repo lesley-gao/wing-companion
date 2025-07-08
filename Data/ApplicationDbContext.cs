@@ -1,23 +1,60 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using NetworkingApp.Models;
 
 namespace NetworkingApp.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
 
-        public DbSet<User> Users { get; set; }
         public DbSet<FlightCompanionRequest> FlightCompanionRequests { get; set; }
         public DbSet<FlightCompanionOffer> FlightCompanionOffers { get; set; }
         public DbSet<PickupRequest> PickupRequests { get; set; }
         public DbSet<PickupOffer> PickupOffers { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+        public DbSet<Rating> Ratings { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Configure decimal precision
+            modelBuilder.Entity<FlightCompanionRequest>()
+                .Property(e => e.OfferedAmount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<FlightCompanionOffer>()
+                .Property(e => e.RequestedAmount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<PickupRequest>()
+                .Property(e => e.OfferedAmount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<PickupOffer>()
+                .Property(e => e.BaseRate)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<PickupOffer>()
+                .Property(e => e.AverageRating)
+                .HasColumnType("decimal(3,2)");
+
+            modelBuilder.Entity<User>()
+                .Property(e => e.Rating)
+                .HasColumnType("decimal(3,2)");
+
+            modelBuilder.Entity<Payment>()
+                .Property(e => e.Amount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Payment>()
+                .Property(e => e.PlatformFeeAmount)
+                .HasColumnType("decimal(18,2)");
 
             // Configure User relationships
             modelBuilder.Entity<FlightCompanionRequest>()
@@ -46,37 +83,74 @@ namespace NetworkingApp.Data
 
             // Configure matching relationships
             modelBuilder.Entity<FlightCompanionRequest>()
-                .HasOne(fcr => fcr.MatchedCompanion)
+                .HasOne(fcr => fcr.MatchedOffer)
                 .WithMany(fco => fco.MatchedRequests)
-                .HasForeignKey(fcr => fcr.MatchedCompanionId)
+                .HasForeignKey(fcr => fcr.MatchedOfferId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<PickupRequest>()
-                .HasOne(pr => pr.MatchedDriver)
+                .HasOne(pr => pr.MatchedOffer)
                 .WithMany(po => po.MatchedRequests)
-                .HasForeignKey(pr => pr.MatchedDriverId)
+                .HasForeignKey(pr => pr.MatchedOfferId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Configure decimal precision
+            // Configure Payment relationships
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.Payer)
+                .WithMany(u => u.PaymentsAsPayer)
+                .HasForeignKey(p => p.PayerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.Receiver)
+                .WithMany(u => u.PaymentsAsReceiver)
+                .HasForeignKey(p => p.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure Rating relationships
+            modelBuilder.Entity<Rating>()
+                .HasOne(r => r.Rater)
+                .WithMany(u => u.RatingsGiven)
+                .HasForeignKey(r => r.RaterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Rating>()
+                .HasOne(r => r.RatedUser)
+                .WithMany(u => u.RatingsReceived)
+                .HasForeignKey(r => r.RatedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure Notification relationships
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany(u => u.Notifications)
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure indexes for performance
             modelBuilder.Entity<FlightCompanionRequest>()
-                .Property(fcr => fcr.OfferedAmount)
-                .HasColumnType("decimal(18,2)");
+                .HasIndex(fcr => new { fcr.FlightNumber, fcr.FlightDate })
+                .HasDatabaseName("IX_FlightCompanionRequest_Flight");
 
             modelBuilder.Entity<FlightCompanionOffer>()
-                .Property(fco => fco.RequestedAmount)
-                .HasColumnType("decimal(18,2)");
+                .HasIndex(fco => new { fco.FlightNumber, fco.FlightDate })
+                .HasDatabaseName("IX_FlightCompanionOffer_Flight");
 
             modelBuilder.Entity<PickupRequest>()
-                .Property(pr => pr.OfferedAmount)
-                .HasColumnType("decimal(18,2)");
+                .HasIndex(pr => new { pr.Airport, pr.ArrivalDate })
+                .HasDatabaseName("IX_PickupRequest_Airport");
 
             modelBuilder.Entity<PickupOffer>()
-                .Property(po => po.BaseRate)
-                .HasColumnType("decimal(18,2)");
+                .HasIndex(po => po.Airport)
+                .HasDatabaseName("IX_PickupOffer_Airport");
 
-            modelBuilder.Entity<PickupOffer>()
-                .Property(po => po.AverageRating)
-                .HasColumnType("decimal(3,2)");
+            modelBuilder.Entity<Payment>()
+                .HasIndex(p => p.Status)
+                .HasDatabaseName("IX_Payment_Status");
+
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => new { n.UserId, n.IsRead })
+                .HasDatabaseName("IX_Notification_User_Read");
         }
     }
 }

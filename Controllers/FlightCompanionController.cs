@@ -25,7 +25,7 @@ namespace NetworkingApp.Controllers
         {
             return await _context.FlightCompanionRequests
                 .Include(fcr => fcr.User)
-                .Include(fcr => fcr.MatchedCompanion)
+                .Include(fcr => fcr.MatchedOffer)
                 .Where(fcr => fcr.IsActive)
                 .OrderByDescending(fcr => fcr.CreatedAt)
                 .ToListAsync();
@@ -48,7 +48,7 @@ namespace NetworkingApp.Controllers
         {
             var request = await _context.FlightCompanionRequests
                 .Include(fcr => fcr.User)
-                .Include(fcr => fcr.MatchedCompanion)
+                .Include(fcr => fcr.MatchedOffer)
                 .FirstOrDefaultAsync(fcr => fcr.Id == id);
 
             if (request == null)
@@ -115,7 +115,7 @@ namespace NetworkingApp.Controllers
             }
 
             request.IsMatched = true;
-            request.MatchedCompanionId = offer.Id;
+            request.MatchedOfferId = offer.Id;
             offer.HelpedCount++;
 
             await _context.SaveChangesAsync();

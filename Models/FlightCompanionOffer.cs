@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
 
 namespace NetworkingApp.Models
@@ -9,40 +10,41 @@ namespace NetworkingApp.Models
         public int Id { get; set; }
         
         public int UserId { get; set; }
-        public virtual User User { get; set; }
+        public virtual User User { get; set; } = null!;
         
         [Required]
         [StringLength(100)]
-        public string FlightNumber { get; set; }
+        public string FlightNumber { get; set; } = string.Empty;
         
         [Required]
         [StringLength(50)]
-        public string Airline { get; set; }
+        public string Airline { get; set; } = string.Empty;
         
         [Required]
         public DateTime FlightDate { get; set; }
         
         [Required]
         [StringLength(10)]
-        public string DepartureAirport { get; set; }
+        public string DepartureAirport { get; set; } = string.Empty;
         
         [Required]
         [StringLength(10)]
-        public string ArrivalAirport { get; set; }
+        public string ArrivalAirport { get; set; } = string.Empty;
         
         [StringLength(200)]
-        public string AvailableServices { get; set; } // "Translation, Navigation, General Help"
+        public string? AvailableServices { get; set; } // "Translation, Navigation, General Help"
         
         [StringLength(50)]
-        public string Languages { get; set; } // "Chinese, English"
+        public string? Languages { get; set; } // "Chinese, English"
         
+        [Column(TypeName = "decimal(18,2)")]
         [Range(0, 500)]
         public decimal RequestedAmount { get; set; }
         
         public bool IsAvailable { get; set; } = true;
         
         [StringLength(1000)]
-        public string AdditionalInfo { get; set; }
+        public string? AdditionalInfo { get; set; }
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         

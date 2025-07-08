@@ -25,7 +25,7 @@ namespace NetworkingApp.Controllers
         {
             return await _context.PickupRequests
                 .Include(pr => pr.User)
-                .Include(pr => pr.MatchedDriver)
+                .Include(pr => pr.MatchedOffer)
                 .Where(pr => pr.IsActive)
                 .OrderByDescending(pr => pr.CreatedAt)
                 .ToListAsync();
@@ -48,7 +48,7 @@ namespace NetworkingApp.Controllers
         {
             var request = await _context.PickupRequests
                 .Include(pr => pr.User)
-                .Include(pr => pr.MatchedDriver)
+                .Include(pr => pr.MatchedOffer)
                 .FirstOrDefaultAsync(pr => pr.Id == id);
 
             if (request == null)
@@ -115,7 +115,7 @@ namespace NetworkingApp.Controllers
             }
 
             request.IsMatched = true;
-            request.MatchedDriverId = offer.Id;
+            request.MatchedOfferId = offer.Id;
             offer.TotalPickups++;
 
             await _context.SaveChangesAsync();
