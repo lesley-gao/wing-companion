@@ -1,3 +1,4 @@
+// ClientApp/src/App.tsx (updated imports and routes)
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
@@ -9,6 +10,7 @@ import { FetchData } from './components/FetchData';
 import { Counter } from './components/Counter';
 import FlightCompanion from './components/FlightCompanion';
 import Pickup from './components/Pickup';
+import UserProfile from './components/UserProfile'; // Add this import
 
 const App: React.FC = () => {
   return (
@@ -21,6 +23,7 @@ const App: React.FC = () => {
             <Route path="/fetch-data" element={<FetchData />} />
             <Route path="/flight-companion" element={<FlightCompanion />} />
             <Route path="/pickup" element={<Pickup />} />
+            <Route path="/profile" element={<UserProfile />} /> {/* Add this route */}
           </Routes>
         </Layout>
       </AppThemeProvider>

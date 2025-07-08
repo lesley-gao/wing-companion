@@ -22,13 +22,14 @@ export const NavMenu: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
 
-  const navigationItems = [
-    { text: 'Home', path: '/' },
-    { text: 'Flight Companion', path: '/flight-companion' },
-    { text: 'Airport Pickup', path: '/pickup' },
-    { text: 'Counter', path: '/counter' },
-    { text: 'Fetch Data', path: '/fetch-data' },
-  ];
+const navigationItems = [
+  { text: 'Home', path: '/' },
+  { text: 'Flight Companion', path: '/flight-companion' },
+  { text: 'Airport Pickup', path: '/pickup' },
+  { text: 'Profile', path: '/profile' }, // Add this
+  { text: 'Counter', path: '/counter' },
+  { text: 'Fetch Data', path: '/fetch-data' },
+];
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
