@@ -32,6 +32,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@storybook/addon-actions": "^9.0.8",
     "@storybook/addon-docs": "^9.0.15",
     "@storybook/preset-create-react-app": "^9.0.15",
     "@storybook/react-webpack5": "^9.0.15",
