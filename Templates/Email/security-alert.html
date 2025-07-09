@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Alert - {{CompanyName}}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+        .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 30px 20px; text-align: center; }
+        .content { padding: 30px 20px; }
+        .alert-box { background-color: #fef2f2; border: 2px solid #dc2626; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .alert-type { background-color: #dc2626; color: white; padding: 8px 16px; border-radius: 20px; display: inline-block; font-weight: bold; margin-bottom: 15px; }
+        .action-required { background-color: #fbbf24; color: #92400e; padding: 15px; border-radius: 6px; font-weight: bold; text-align: center; margin: 20px 0; }
+        .button { display: inline-block; background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+        .footer { background-color: #f8fafc; padding: 20px; text-align: center; color: #666; font-size: 14px; }
+        .footer a { color: #2563eb; text-decoration: none; }
+        .security-tips { background-color: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 28px;">🚨 {{CompanyName}}</h1>
+            <p style="margin: 10px 0 0 0; font-size: 18px;">Security Alert</p>
+        </div>
+        
+        <div class="content">
+            <h2 style="color: #dc2626; margin-bottom: 20px;">Hello {{UserName}},</h2>
+            
+            <p><strong>We've detected unusual activity on your account that requires your immediate attention.</strong></p>
+            
+            <div class="alert-box">
+                <div class="alert-type">{{AlertType}}</div>
+                <div style="color: #dc2626; font-weight: bold; margin-bottom: 15px;">Alert Details:</div>
+                <div>{{AlertDetails}}</div>
+            </div>
+            
+            <div class="action-required">
+                ⚠️ Immediate Action Required - Please review your account security
+            </div>
+            
+            <h3 style="color: #dc2626;">What You Should Do:</h3>
+            <ol>
+                <li><strong>Review your account immediately</strong> - Check for any unauthorized activity</li>
+                <li><strong>Change your password</strong> - Use a strong, unique password</li>
+                <li><strong>Enable two-factor authentication</strong> - Add an extra layer of security</li>
+                <li><strong>Review active sessions</strong> - Sign out of all devices if necessary</li>
+                <li><strong>Contact us</strong> - If you didn't initiate this activity</li>
+            </ol>
+            
+            <a href="{{WebsiteUrl}}/account/security" class="button">Review Account Security</a>
+            
+            <div class="security-tips">
+                <strong>🔒 Security Tips:</strong>
+                <ul style="margin: 10px 0;">
+                    <li>Never share your login credentials with anyone</li>
+                    <li>Always log out from shared or public computers</li>
+                    <li>Use unique passwords for each online account</li>
+                    <li>Be cautious of phishing emails and suspicious links</li>
+                    <li>Keep your browser and apps updated</li>
+                </ul>
+            </div>
+            
+            <h3 style="color: #dc2626;">Was This You?</h3>
+            <p>If you recognize this activity and it was initiated by you, no further action is required. However, we still recommend reviewing your account security settings as a best practice.</p>
+            
+            <p style="margin-top: 30px;"><strong>If you did not initiate this activity, please contact our security team immediately.</strong></p>
+            
+            <p>Stay safe,<br>
+            The {{CompanyName}} Security Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {{Year}} {{CompanyName}}. All rights reserved.</p>
+            <p>
+                <a href="{{WebsiteUrl}}">Visit our website</a> | 
+                <a href="mailto:{{SupportEmail}}">Contact Support</a> | 
+                <a href="mailto:security@{{CompanyName}}.com">Security Team</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

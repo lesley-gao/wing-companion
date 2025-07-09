@@ -11,15 +11,18 @@ namespace NetworkingApp.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IEmailService _emailService;
         private readonly ILogger<NotificationService> _logger;
 
         public NotificationService(
             ApplicationDbContext context,
             IHubContext<NotificationHub> hubContext,
+            IEmailService emailService,
             ILogger<NotificationService> logger)
         {
             _context = context;
             _hubContext = hubContext;
+            _emailService = emailService;
             _logger = logger;
         }
 
@@ -27,6 +30,17 @@ namespace NetworkingApp.Services
         {
             try
             {
+                // Get user details for email notifications
+                var requesterUser = await _context.Users.FindAsync(requestUserId);
+                var matchedUser = await _context.Users.FindAsync(matchedUserId);
+
+                if (requesterUser == null || matchedUser == null)
+                {
+                    _logger.LogWarning("Could not find users for match notification. Requester: {RequestUserId}, Matched: {MatchedUserId}", 
+                        requestUserId, matchedUserId);
+                    return;
+                }
+
                 // Create notification for requester
                 var requesterNotification = new Notification
                 {
@@ -78,6 +92,26 @@ namespace NetworkingApp.Services
                         createdAt = matchedUserNotification.CreatedAt,
                         isRead = false
                     });
+
+                // Send email notifications
+                try
+                {
+                    var serviceType = requestType.Replace("Request", "");
+                    var serviceDetails = await GetServiceDetails(requestType, requestId);
+                    
+                    await _emailService.SendMatchConfirmationEmailAsync(
+                        requesterUser.Email!, 
+                        requesterUser.FirstName,
+                        matchedUser.Email!, 
+                        matchedUser.FirstName, 
+                        serviceType, 
+                        serviceDetails);
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogError(emailEx, "Failed to send match confirmation emails for request {RequestId}", requestId);
+                    // Don't throw - email failure shouldn't break the notification flow
+                }
 
                 _logger.LogInformation("Match found notifications sent to users {RequestUserId} and {MatchedUserId}", 
                     requestUserId, matchedUserId);
@@ -242,6 +276,40 @@ namespace NetworkingApp.Services
                 "success" => DateTime.UtcNow.AddDays(3),
                 _ => DateTime.UtcNow.AddDays(7)
             };
+        }
+
+        private async Task<string> GetServiceDetails(string requestType, int requestId)
+        {
+            try
+            {
+                if (requestType == "FlightCompanionRequest")
+                {
+                    var request = await _context.FlightCompanionRequests
+                        .FirstOrDefaultAsync(r => r.Id == requestId);
+                    
+                    if (request != null)
+                    {
+                        return $"Flight: {request.FlightNumber} from {request.DepartureAirport} to {request.ArrivalAirport} on {request.FlightDate:MMM dd, yyyy}";
+                    }
+                }
+                else if (requestType == "PickupRequest")
+                {
+                    var request = await _context.PickupRequests
+                        .FirstOrDefaultAsync(r => r.Id == requestId);
+                    
+                    if (request != null)
+                    {
+                        return $"Pickup from {request.Airport} to {request.DestinationAddress} on {request.ArrivalDate:MMM dd, yyyy} at {request.ArrivalTime:hh\\:mm}";
+                    }
+                }
+                
+                return $"Service request #{requestId}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting service details for {RequestType} {RequestId}", requestType, requestId);
+                return $"Service request #{requestId}";
+            }
         }
     }
 }

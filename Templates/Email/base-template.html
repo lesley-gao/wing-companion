@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{CompanyName}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .logo {
+            max-height: 60px;
+            margin-bottom: 15px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            border-top: 1px solid #e2e8f0;
+        }
+        .highlight {
+            background-color: #eff6ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+            margin: 20px 0;
+        }
+        .social-links {
+            margin: 20px 0;
+        }
+        .social-links a {
+            color: #2563eb;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                box-shadow: none;
+            }
+            .header, .content, .footer {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            {{#if LogoUrl}}
+            <img src="{{LogoUrl}}" alt="{{CompanyName}}" class="logo">
+            {{/if}}
+            <h1 style="margin: 0; font-size: 24px;">{{CompanyName}}</h1>
+        </div>
+        
+        <div class="content">
+            <!-- Content will be inserted here by specific templates -->
+            {{content}}
+        </div>
+        
+        <div class="footer">
+            <p><strong>{{CompanyName}}</strong></p>
+            <p>Connecting the Chinese community in Auckland through safe and reliable travel services</p>
+            
+            {{#if SupportEmail}}
+            <p>Need help? Contact us at <a href="mailto:{{SupportEmail}}" style="color: #2563eb;">{{SupportEmail}}</a></p>
+            {{/if}}
+            
+            {{#if WebsiteUrl}}
+            <p><a href="{{WebsiteUrl}}" style="color: #2563eb;">Visit our website</a></p>
+            {{/if}}
+            
+            <div class="social-links">
+                <!-- Add social media links here -->
+            </div>
+            
+            <p style="font-size: 12px; margin-top: 20px;">
+                © {{Year}} {{CompanyName}}. All rights reserved.
+            </p>
+            
+            {{#if UnsubscribeUrl}}
+            <p style="font-size: 12px;">
+                <a href="{{UnsubscribeUrl}}" style="color: #666;">Unsubscribe from these emails</a>
+            </p>
+            {{/if}}
+        </div>
+    </div>
+</body>
+</html>

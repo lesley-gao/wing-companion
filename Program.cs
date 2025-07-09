@@ -22,18 +22,31 @@ builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
     // Password settings
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
-    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireNonAlphanumeric = true;
     options.Password.RequireUppercase = true;
-    options.Password.RequiredLength = 6;
+    options.Password.RequiredLength = 8;
+    options.Password.RequiredUniqueChars = 4;
+    
+    // Lockout settings
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
     
     // User settings
     options.User.RequireUniqueEmail = true;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
     
     // Sign-in settings
-    options.SignIn.RequireConfirmedEmail = false;
+    options.SignIn.RequireConfirmedEmail = false; // Will be true in production
+    options.SignIn.RequireConfirmedPhoneNumber = false;
+    
+    // Token settings
+    options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
+    options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultEmailProvider;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddRoles<IdentityRole<int>>();
 
 builder.Services.AddControllers(options =>
 {
@@ -86,6 +99,11 @@ if (builder.Environment.IsDevelopment())
 // Register business services
 builder.Services.AddScoped<IMatchingService, MatchingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>(); // Register NotificationService
+builder.Services.AddScoped<IRoleService, RoleService>(); // Register RoleService
+
+// Configure Email Service
+builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection("EmailConfiguration"));
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 
@@ -123,8 +141,10 @@ if (app.Environment.IsDevelopment())
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    
+    var roleService = scope.ServiceProvider.GetRequiredService<IRoleService>();
+
     await DatabaseSeeder.SeedAsync(context, userManager, logger);
+    await roleService.InitializeRolesAsync();
 }
 
 app.Run();

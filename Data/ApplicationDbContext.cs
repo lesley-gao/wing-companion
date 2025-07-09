@@ -19,6 +19,7 @@ namespace NetworkingApp.Data
         public DbSet<Rating> Ratings { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<UserSettings> UserSettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -183,6 +184,18 @@ namespace NetworkingApp.Data
             modelBuilder.Entity<Message>()
                 .HasIndex(m => new { m.SenderId, m.CreatedAt })
                 .HasDatabaseName("IX_Message_Sender_Created");
+
+            // Configure UserSettings
+            modelBuilder.Entity<UserSettings>()
+                .HasOne(us => us.User)
+                .WithOne()
+                .HasForeignKey<UserSettings>(us => us.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserSettings>()
+                .HasIndex(us => us.UserId)
+                .IsUnique()
+                .HasDatabaseName("IX_UserSettings_UserId");
         }
     }
 }

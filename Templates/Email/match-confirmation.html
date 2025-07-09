@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{CompanyName}} - Match Found!</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .highlight {
+            background-color: #ecfdf5;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 28px;">🎉 Great News!</h1>
+            <p style="margin: 10px 0 0 0; font-size: 18px;">Your {{ServiceType}} request has been matched!</p>
+        </div>
+        
+        <div class="content">
+            <h2 style="color: #10b981;">Hello {{RecipientName}}!</h2>
+            
+            <p>We have exciting news for you! Your {{ServiceType}} request has been successfully matched with a verified community member.</p>
+            
+            <div class="highlight">
+                <h3 style="margin-top: 0; color: #059669;">Match Details</h3>
+                <p><strong>Your {{Role === 'requester' ? 'Helper' : 'Service Partner'}}:</strong> {{PartnerName}}</p>
+                <p><strong>Service Type:</strong> {{ServiceType}}</p>
+                <p><strong>Details:</strong></p>
+                <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 10px 0;">
+                    {{ServiceDetails}}
+                </div>
+            </div>
+            
+            <h3>What's Next?</h3>
+            <ul>
+                <li>You'll receive contact information for your match</li>
+                <li>Please coordinate directly to confirm final arrangements</li>
+                <li>Payment will be held securely until service completion</li>
+                <li>We'll send you a reminder before your travel date</li>
+            </ul>
+            
+            <p style="text-align: center;">
+                <a href="{{WebsiteUrl}}/dashboard" class="button">View Match Details</a>
+            </p>
+            
+            <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 30px 0;">
+                <h4 style="margin-top: 0; color: #92400e;">Safety Reminders</h4>
+                <ul style="margin-bottom: 0;">
+                    <li>Always meet in public places for initial introductions</li>
+                    <li>Share your travel details with a trusted friend or family member</li>
+                    <li>Use our in-app messaging system for communication</li>
+                    <li>Report any concerns to our support team immediately</li>
+                </ul>
+            </div>
+            
+            <p>Thank you for being part of our community! We're here to help make your travel experience smooth and enjoyable.</p>
+            
+            <p>Safe travels,<br>
+            <strong>The {{CompanyName}} Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>{{CompanyName}}</strong></p>
+            <p>Connecting the Chinese community in Auckland through safe and reliable travel services</p>
+            
+            <p>Need help? Contact us at <a href="mailto:{{SupportEmail}}" style="color: #2563eb;">{{SupportEmail}}</a></p>
+            
+            <p style="font-size: 12px; margin-top: 20px;">
+                © {{Year}} {{CompanyName}}. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

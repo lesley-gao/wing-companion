@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Reminder - {{CompanyName}}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+        .header { background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); color: white; padding: 30px 20px; text-align: center; }
+        .content { padding: 30px 20px; }
+        .reminder-box { background-color: #fff7ed; border: 2px solid #ea580c; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .service-date { background-color: #ea580c; color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 18px; margin: 20px 0; }
+        .checklist { background-color: #f0fdf4; border-left: 4px solid #059669; padding: 15px; margin: 20px 0; }
+        .button { display: inline-block; background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+        .footer { background-color: #f8fafc; padding: 20px; text-align: center; color: #666; font-size: 14px; }
+        .footer a { color: #2563eb; text-decoration: none; }
+        .contact-info { background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 28px;">⏰ {{CompanyName}}</h1>
+            <p style="margin: 10px 0 0 0; font-size: 18px;">Service Reminder</p>
+        </div>
+        
+        <div class="content">
+            <h2 style="color: #ea580c; margin-bottom: 20px;">Hello {{UserName}},</h2>
+            
+            <p>This is a friendly reminder about your upcoming {{ServiceType}} service. We want to make sure you're all set for a smooth experience!</p>
+            
+            <div class="service-date">
+                📅 {{ServiceDate}}
+            </div>
+            
+            <div class="reminder-box">
+                <h3 style="margin-top: 0; color: #ea580c;">Service Details</h3>
+                <div>{{ReminderDetails}}</div>
+            </div>
+            
+            <div class="checklist">
+                <h3 style="margin-top: 0; color: #059669;">✅ Pre-Service Checklist</h3>
+                <ul style="margin: 10px 0;">
+                    <li>Confirm your contact information is up to date</li>
+                    <li>Review the service details and meeting location</li>
+                    <li>Ensure you have all necessary travel documents</li>
+                    <li>Check weather conditions and plan accordingly</li>
+                    <li>Have the {{CompanyName}} app ready for easy communication</li>
+                    <li>Save your service partner's contact information</li>
+                </ul>
+            </div>
+            
+            <h3 style="color: #ea580c;">Need to Make Changes?</h3>
+            <p>If you need to modify or cancel your service, please do so as soon as possible to avoid any cancellation fees and to give your service partner adequate notice.</p>
+            
+            <div class="contact-info">
+                <strong>📞 Need Help?</strong><br>
+                If you have questions or need assistance, our support team is available 24/7 to help ensure your service goes smoothly.
+            </div>
+            
+            <a href="{{WebsiteUrl}}/bookings" class="button">View Service Details</a>
+            
+            <h3 style="color: #ea580c;">Day of Service Tips</h3>
+            <ul>
+                <li>Arrive at the meeting location a few minutes early</li>
+                <li>Keep your phone charged and accessible</li>
+                <li>Have a backup communication method ready</li>
+                <li>Be respectful and courteous to your service partner</li>
+                <li>Don't forget to rate your experience afterward!</li>
+            </ul>
+            
+            <p style="margin-top: 30px;">We're here to make your travel experience as smooth as possible. Have a great trip!</p>
+            
+            <p>Safe travels,<br>
+            The {{CompanyName}} Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {{Year}} {{CompanyName}}. All rights reserved.</p>
+            <p>
+                <a href="{{WebsiteUrl}}">Visit our website</a> | 
+                <a href="mailto:{{SupportEmail}}">Contact Support</a> | 
+                <a href="{{UnsubscribeUrl}}">Unsubscribe</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

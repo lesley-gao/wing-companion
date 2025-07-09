@@ -69,6 +69,11 @@ namespace NetworkingApp.Data.SeedData
                 await context.Notifications.AddRangeAsync(notifications);
                 logger.LogInformation($"Seeded {notifications.Count} notifications");
 
+                // Seed User Settings
+                var userSettings = UserSettingsSeedDataFactory.CreateUserSettings();
+                await context.UserSettings.AddRangeAsync(userSettings);
+                logger.LogInformation($"Seeded {userSettings.Count} user settings");
+
                 // Save all changes
                 await context.SaveChangesAsync();
 
