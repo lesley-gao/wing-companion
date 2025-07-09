@@ -21,6 +21,8 @@ namespace NetworkingApp.Data
         public DbSet<Message> Messages { get; set; }
         public DbSet<UserSettings> UserSettings { get; set; }
         public DbSet<VerificationDocument> VerificationDocuments { get; set; }
+        public DbSet<Escrow> Escrows { get; set; }
+        public DbSet<Dispute> Disputes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -57,6 +59,10 @@ namespace NetworkingApp.Data
 
             modelBuilder.Entity<Payment>()
                 .Property(e => e.PlatformFeeAmount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Escrow>()
+                .Property(e => e.Amount)
                 .HasColumnType("decimal(18,2)");
 
             // Configure User relationships
@@ -109,6 +115,13 @@ namespace NetworkingApp.Data
                 .WithMany(u => u.PaymentsAsReceiver)
                 .HasForeignKey(p => p.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure Escrow relationships
+            modelBuilder.Entity<Escrow>()
+                .HasOne(e => e.Payment)
+                .WithMany()
+                .HasForeignKey(e => e.PaymentId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Configure Rating relationships
             modelBuilder.Entity<Rating>()

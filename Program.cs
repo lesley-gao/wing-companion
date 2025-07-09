@@ -9,8 +9,14 @@ using NetworkingApp.Models;
 using NetworkingApp.Data.SeedData;
 using NetworkingApp.Services;
 using NetworkingApp.Hubs; // Add this using statement
+using Stripe;
+using Microsoft.AspNetCore.DataProtection; // Add this using directive
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Stripe configuration
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:ApiKey"];
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -101,6 +107,7 @@ builder.Services.AddScoped<IMatchingService, MatchingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>(); // Register NotificationService
 builder.Services.AddScoped<IRoleService, RoleService>(); // Register RoleService
 builder.Services.AddScoped<IDataProtectionService, DataProtectionService>(); // Register DataProtectionService
+builder.Services.AddScoped<PaymentService>(); // Register PaymentService
 
 // Configure Email Service
 builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection("EmailConfiguration"));
@@ -136,7 +143,6 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
 // Configure Data Protection for encryption of sensitive data
 builder.Services.AddDataProtection()
-    .SetApplicationName("NetworkingApp")
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "DataProtectionKeys")));
 
 var app = builder.Build();

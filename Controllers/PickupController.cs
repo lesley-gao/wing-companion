@@ -19,15 +19,18 @@ namespace NetworkingApp.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PickupController> _logger;
         private readonly INotificationService _notificationService;
+        private readonly PaymentService _paymentService;
 
         public PickupController(
             ApplicationDbContext context, 
             ILogger<PickupController> logger,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            PaymentService paymentService)
         {
             _context = context;
             _logger = logger;
             _notificationService = notificationService;
+            _paymentService = paymentService;
         }
 
         // GET: api/Pickup/requests
@@ -272,10 +275,24 @@ namespace NetworkingApp.Controllers
             // Update match status
             request.IsMatched = true;
             request.MatchedOfferId = matchRequest.OfferId;
-
             offer.IsAvailable = false;
-
             await _context.SaveChangesAsync();
+
+            // Create payment and hold funds in escrow
+            var payment = new Payment
+            {
+                PayerId = request.UserId,
+                ReceiverId = offer.UserId,
+                RequestId = request.Id,
+                RequestType = "Pickup",
+                Amount = request.OfferedAmount,
+                Currency = "NZD",
+                Status = PaymentStatus.HeldInEscrow.ToString(),
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Payments.Add(payment);
+            await _context.SaveChangesAsync();
+            await _paymentService.HoldFundsAsync(payment.Id, payment.Amount);
 
             // Send notifications to both users
             await _notificationService.SendMatchFoundNotificationAsync(
@@ -288,6 +305,24 @@ namespace NetworkingApp.Controllers
                 $"/pickup/service/{request.Id}");
 
             return Ok(new { Message = "Match created successfully" });
+        }
+
+        /// <summary>
+        /// Marks a pickup service as completed and releases escrowed funds.
+        /// </summary>
+        [HttpPost("complete-service")]
+        public async Task<IActionResult> CompleteService([FromBody] CompleteServiceRequest req)
+        {
+            var payment = await _context.Payments.Include(p => p.Escrow).FirstOrDefaultAsync(p => p.RequestId == req.RequestId && p.RequestType == "Pickup");
+            if (payment == null || payment.Escrow == null)
+                return NotFound("No escrowed payment found for this service.");
+            await _paymentService.ReleaseFundsAsync(payment.Escrow.Id);
+            return Ok(new { Message = "Service marked as completed and funds released." });
+        }
+
+        public class CompleteServiceRequest
+        {
+            public int RequestId { get; set; }
         }
 
         // GET: api/Pickup/requests/airport/{airport}

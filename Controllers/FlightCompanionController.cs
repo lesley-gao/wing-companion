@@ -3,6 +3,7 @@ using NetworkingApp.Data;
 using NetworkingApp.Models;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using NetworkingApp.Services;
 
 namespace NetworkingApp.Controllers
 {
@@ -13,15 +14,18 @@ namespace NetworkingApp.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<FlightCompanionController> _logger;
+        private readonly PaymentService _paymentService;
 
         public FlightCompanionController(
             ApplicationDbContext context, 
             IMapper mapper,
-            ILogger<FlightCompanionController> logger)
+            ILogger<FlightCompanionController> logger,
+            PaymentService paymentService)
         {
             _context = context;
             _mapper = mapper;
             _logger = logger;
+            _paymentService = paymentService;
         }
 
         // ✅ EXISTING - GET: api/flightcompanion/requests
@@ -211,6 +215,78 @@ namespace NetworkingApp.Controllers
                 .ToListAsync();
 
             return Ok(matches);
+        }
+
+        // TODO: Add match confirmation endpoint
+        /// <summary>
+        /// Confirms a match between a request and an offer, creates payment and holds funds in escrow.
+        /// </summary>
+        [HttpPut("match")]
+        public async Task<IActionResult> MatchRequestWithOffer([FromBody] FlightCompanionMatchRequest matchRequest)
+        {
+            if (matchRequest.RequestId <= 0 || matchRequest.OfferId <= 0)
+                return BadRequest("Invalid request or offer ID.");
+
+            var request = await _context.FlightCompanionRequests.FindAsync(matchRequest.RequestId);
+            var offer = await _context.FlightCompanionOffers.FindAsync(matchRequest.OfferId);
+
+            if (request == null) return NotFound($"Request {matchRequest.RequestId} not found.");
+            if (offer == null) return NotFound($"Offer {matchRequest.OfferId} not found.");
+            if (request.IsMatched) return BadRequest("Request is already matched.");
+            if (!offer.IsAvailable) return BadRequest("Offer is not available.");
+
+            // Update match
+            request.IsMatched = true;
+            request.MatchedOfferId = matchRequest.OfferId;
+            offer.IsAvailable = false;
+
+            await _context.SaveChangesAsync();
+
+            // Create payment and hold funds
+            var payment = new Payment
+            {
+                PayerId = request.UserId,
+                ReceiverId = offer.UserId,
+                RequestId = request.Id,
+                RequestType = "FlightCompanion",
+                Amount = request.OfferedAmount,
+                Currency = "NZD",
+                Status = PaymentStatus.HeldInEscrow.ToString(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Payments.Add(payment);
+            await _context.SaveChangesAsync();
+            await _paymentService.HoldFundsAsync(payment.Id, payment.Amount);
+
+            // TODO: Add notifications if needed
+
+            return Ok(new { Message = "Match confirmed and funds held in escrow." });
+        }
+
+        /// <summary>
+        /// Marks a flight companion service as completed and releases escrowed funds.
+        /// </summary>
+        [HttpPost("complete-service")]
+        public async Task<IActionResult> CompleteService([FromBody] CompleteServiceRequest req)
+        {
+            var payment = await _context.Payments.Include(p => p.Escrow).FirstOrDefaultAsync(p => p.RequestId == req.RequestId && p.RequestType == "FlightCompanion");
+            if (payment == null || payment.Escrow == null)
+                return NotFound("No escrowed payment found for this service.");
+
+            await _paymentService.ReleaseFundsAsync(payment.Escrow.Id);
+
+            return Ok(new { Message = "Service marked as completed and funds released." });
+        }
+
+        public class FlightCompanionMatchRequest
+        {
+            public int RequestId { get; set; }
+            public int OfferId { get; set; }
+        }
+        public class CompleteServiceRequest
+        {
+            public int RequestId { get; set; }
         }
 
         // TEMPORARY - GET: api/flightcompanion/test

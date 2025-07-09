@@ -4,8 +4,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NetworkingApp.Models
 {
+    /// <summary>
+    /// Represents a payment transaction in the platform.
+    /// </summary>
     public class Payment
     {
+        [Key]
         public int Id { get; set; }
         
         public int PayerId { get; set; }
@@ -41,5 +45,18 @@ namespace NetworkingApp.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         public DateTime? CompletedAt { get; set; }
+        
+        public int? EscrowId { get; set; }
+        [ForeignKey("EscrowId")]
+        public Escrow? Escrow { get; set; }
+    }
+
+    public enum PaymentStatus
+    {
+        Pending,
+        HeldInEscrow,
+        Released,
+        Refunded,
+        Failed
     }
 }
