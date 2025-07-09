@@ -1,6 +1,6 @@
-// ClientApp/src/App.tsx - Updated to include Error Boundary and Notification System
+// ClientApp/src/App.tsx - Fixed Router nesting issue
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom'; // Remove BrowserRouter import
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import { AppThemeProvider } from './themes/ThemeProvider';
@@ -28,17 +28,16 @@ const AppContent: React.FC = () => {
       }}
       showDetails={process.env.NODE_ENV === 'development'}
     >
-      <Router>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<FlightCompanion />} />
-            <Route path="/flight-companion" element={<FlightCompanion />} />
-            <Route path="/pickup" element={<Pickup />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="/fetch-data" element={<FetchData />} />
-          </Routes>
-        </Layout>
-      </Router>
+      {/* Remove <Router> wrapper - it's already in index.tsx */}
+      <Layout>
+        <Routes>
+          <Route path="/" element={<FlightCompanion />} />
+          <Route path="/flight-companion" element={<FlightCompanion />} />
+          <Route path="/pickup" element={<Pickup />} />
+          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/fetch-data" element={<FetchData />} />
+        </Routes>
+      </Layout>
 
       {/* Global Loading Overlay */}
       <LoadingOverlay 

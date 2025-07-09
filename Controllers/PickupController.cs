@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations; 
+using Microsoft.Extensions.Logging;
 
 namespace NetworkingApp.Controllers
 {
@@ -15,33 +16,54 @@ namespace NetworkingApp.Controllers
     public class PickupController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<PickupController> _logger;
 
-        public PickupController(ApplicationDbContext context)
+        public PickupController(ApplicationDbContext context, ILogger<PickupController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/Pickup/requests
         [HttpGet("requests")]
         public async Task<ActionResult<IEnumerable<PickupRequest>>> GetRequests()
         {
-            return await _context.PickupRequests
-                .Include(pr => pr.User)
-                .Include(pr => pr.MatchedOffer)
-                .Where(pr => pr.IsActive)
-                .OrderByDescending(pr => pr.CreatedAt)
-                .ToListAsync();
+            try
+            {
+                // Remove .Include(pr => pr.User) to avoid circular reference
+                var requests = await _context.PickupRequests
+                    .Where(pr => pr.IsActive)
+                    .OrderByDescending(pr => pr.CreatedAt)
+                    .ToListAsync();
+
+                return Ok(requests);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving pickup requests");
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         // GET: api/Pickup/offers
         [HttpGet("offers")]
         public async Task<ActionResult<IEnumerable<PickupOffer>>> GetOffers()
         {
-            return await _context.PickupOffers
-                .Include(po => po.User)
-                .Where(po => po.IsAvailable)
-                .OrderByDescending(po => po.CreatedAt)
-                .ToListAsync();
+            try
+            {
+                // Remove .Include(po => po.User) to avoid circular reference
+                var offers = await _context.PickupOffers
+                    .Where(po => po.IsAvailable)
+                    .OrderByDescending(po => po.CreatedAt)
+                    .ToListAsync();
+
+                return Ok(offers);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving pickup offers");
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         // GET: api/Pickup/requests/5
@@ -53,17 +75,24 @@ namespace NetworkingApp.Controllers
                 return BadRequest("Invalid request ID.");
             }
 
-            var request = await _context.PickupRequests
-                .Include(pr => pr.User)
-                .Include(pr => pr.MatchedOffer)
-                .FirstOrDefaultAsync(pr => pr.Id == id);
-
-            if (request == null)
+            try
             {
-                return NotFound($"Pickup request with ID {id} not found.");
-            }
+                // Remove .Include(pr => pr.User) to avoid circular reference
+                var request = await _context.PickupRequests
+                    .FirstOrDefaultAsync(pr => pr.Id == id);
 
-            return request;
+                if (request == null)
+                {
+                    return NotFound($"Pickup request with ID {id} not found.");
+                }
+
+                return Ok(request);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving pickup request {RequestId}", id);
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         // POST: api/Pickup/requests

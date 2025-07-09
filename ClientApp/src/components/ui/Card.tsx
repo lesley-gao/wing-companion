@@ -19,6 +19,7 @@ export interface CardProps {
   hover?: boolean;
   onClick?: () => void;
   'data-testid'?: string;
+  loading?: boolean; // Add this line
 }
 
 export interface CardHeaderProps {
@@ -129,7 +130,7 @@ const CardActions: React.FC<CardActionsProps> = ({
   );
 };
 
-// Main Card component as a regular function component
+// Main Card component implementation
 const CardComponent: React.FC<CardProps> = ({
   children,
   className = '',
@@ -138,9 +139,20 @@ const CardComponent: React.FC<CardProps> = ({
   sx,
   hover = false,
   onClick,
+  loading = false, // Add this parameter
   'data-testid': testId,
   ...props
 }) => {
+  // Show loading skeleton when loading is true
+  if (loading) {
+    return (
+      <div data-testid="card-skeleton">
+        {/* You could use the CardSkeleton component here */}
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <StyledCard
       elevation={elevation}

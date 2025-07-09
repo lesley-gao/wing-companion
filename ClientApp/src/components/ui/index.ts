@@ -23,5 +23,6 @@ export type {
   RadioOption 
 } from './Input';
 
-export { Modal, ModalHeader, ModalContent, ModalActions } from './Modal';
+// Fixed Modal exports - remove the individual component exports since they're compound components
+export { Modal } from './Modal';
 export type { ModalProps, ModalHeaderProps, ModalContentProps, ModalActionsProps } from './Modal';

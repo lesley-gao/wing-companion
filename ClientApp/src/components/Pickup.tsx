@@ -552,9 +552,17 @@ const Pickup: React.FC<PickupProps> = () => {
                 </Typography>
               </Paper>
             ) : (
-              <Grid container spacing={3}>
+              <Grid container spacing={3} className="grid-cards">
                 {requests.map((request) => (
-                  <Grid item xs={12} md={6} key={request.id}>
+                  <Grid 
+                    item 
+                    xs={12} 
+                    sm={6} 
+                    lg={4} 
+                    xl={3}
+                    key={request.id}
+                    className="flex"
+                  >
                     {renderRequestCard(request)}
                   </Grid>
                 ))}

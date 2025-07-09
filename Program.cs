@@ -14,6 +14,25 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Configure ASP.NET Core Identity
+builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
+{
+    // Password settings
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = true;
+    options.Password.RequiredLength = 6;
+    
+    // User settings
+    options.User.RequireUniqueEmail = true;
+    
+    // Sign-in settings
+    options.SignIn.RequireConfirmedEmail = false;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
 builder.Services.AddControllers(options =>
 {
     // Add global model validation filter
@@ -69,6 +88,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors();
 
+// Use Identity authentication/authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
