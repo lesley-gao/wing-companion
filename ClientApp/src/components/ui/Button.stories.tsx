@@ -1,5 +1,6 @@
 // ClientApp/src/components/ui/Button.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react-webpack5';
+import React from 'react';
+import { Meta, StoryObj } from '@storybook/react';
 import { Button } from './Button';
 import { Add, Download, Delete, Save } from '@mui/icons-material';
 

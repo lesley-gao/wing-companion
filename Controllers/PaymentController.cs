@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using NetworkingApp.Models;
+using NetworkingApp.Models.DTOs;
+using NetworkingApp.Services;
 using Stripe;
 using Stripe.Checkout;
 using System.Threading.Tasks;
@@ -15,10 +17,12 @@ namespace NetworkingApp.Controllers
     [Route("api/[controller]")]
     public class PaymentController : ControllerBase
     {
+        private readonly PaymentService _paymentService;
         private readonly StripeSettings _stripeSettings;
 
-        public PaymentController(IOptions<StripeSettings> stripeOptions)
+        public PaymentController(PaymentService paymentService, IOptions<StripeSettings> stripeOptions)
         {
+            _paymentService = paymentService;
             _stripeSettings = stripeOptions.Value;
         }
 
@@ -46,6 +50,20 @@ namespace NetworkingApp.Controllers
         }
 
         /// <summary>
+        /// Confirms the payment and generates a receipt.
+        /// </summary>
+        /// <param name="request">Payment confirmation request</param>
+        /// <returns>Receipt information</returns>
+        [HttpPost("confirm")]
+        public async Task<IActionResult> Confirm([FromBody] ConfirmPaymentRequest request)
+        {
+            var receipt = await _paymentService.ConfirmAndGenerateReceiptAsync(request.PaymentIntentId, request.UserId);
+            if (receipt == null)
+                return BadRequest("Payment confirmation failed.");
+            return Ok(receipt);
+        }
+
+        /// <summary>
         /// Webhook endpoint for Stripe events (e.g., payment succeeded).
         /// </summary>
         [HttpPost("webhook")]
@@ -70,6 +88,19 @@ namespace NetworkingApp.Controllers
             // TODO: Handle event types (e.g., payment_intent.succeeded)
             return Ok();
         }
+
+        /// <summary>
+        /// Gets the payment history for a user.
+        /// </summary>
+        /// <param name="userId">The user's ID.</param>
+        /// <returns>List of payments for the user.</returns>
+        [HttpGet("history/{userId}")]
+        [Authorize]
+        public async Task<IActionResult> GetPaymentHistory(string userId)
+        {
+            var payments = await _paymentService.GetPaymentHistoryAsync(userId);
+            return Ok(payments);
+        }
     }
 
     /// <summary>
@@ -82,5 +113,14 @@ namespace NetworkingApp.Controllers
         public string? ReceiptEmail { get; set; }
         public string? Description { get; set; }
         public System.Collections.Generic.Dictionary<string, string>? Metadata { get; set; }
+    }
+
+    /// <summary>
+    /// Request model for confirming a payment.
+    /// </summary>
+    public class ConfirmPaymentRequest
+    {
+        public string PaymentIntentId { get; set; } = null!;
+        public string UserId { get; set; } = null!;
     }
 }

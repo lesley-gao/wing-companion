@@ -7,6 +7,7 @@ import {
   useElements
 } from '@stripe/react-stripe-js';
 import { Button, CircularProgress, Box, Typography } from '@mui/material';
+import Receipt from './Receipt';
 
 // TODO: Replace with your actual Stripe publishable key (use env variable in production)
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY || 'pk_test_12345');
@@ -22,6 +23,7 @@ const PaymentFormInner: React.FC<PaymentFormProps> = ({ paymentIntentClientSecre
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +57,20 @@ const PaymentFormInner: React.FC<PaymentFormProps> = ({ paymentIntentClientSecre
     setLoading(false);
   };
 
+  const confirmPayment = async () => {
+    const res = await fetch('/api/payment/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentIntentId: '', userId: '' }), // TODO: Pass actual paymentIntentId and userId
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setReceipt(data);
+    } else {
+      // handle error
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto p-4 bg-white dark:bg-gray-800 rounded shadow">
       <Typography variant="h6" className="mb-2">Payment Details</Typography>
@@ -71,6 +87,7 @@ const PaymentFormInner: React.FC<PaymentFormProps> = ({ paymentIntentClientSecre
       >
         {loading ? <CircularProgress size={24} /> : 'Pay Now'}
       </Button>
+      {receipt && <Receipt receipt={receipt} />}
     </form>
   );
 };

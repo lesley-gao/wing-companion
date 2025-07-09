@@ -1,5 +1,6 @@
 // ClientApp/src/stories/PickupRequestForm.stories.tsx
-import type { Meta, StoryObj } from "@storybook/react-webpack5";
+import React from 'react';
+import { Meta, StoryObj } from '@storybook/react';
 import { fn } from "storybook/test";  // Use fn instead of action
 import { PickupRequestForm } from "../components/forms/PickupRequestForm";
 import { Provider } from "react-redux";

@@ -13,7 +13,6 @@ import {
   Button,
   Avatar,
   Chip,
-  Paper,
   Divider,
   Alert,
   Snackbar,
@@ -22,9 +21,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  LinearProgress,
-  Tooltip,
-  IconButton,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -42,6 +38,7 @@ import {
 } from '@mui/icons-material';
 import { Input } from './ui';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import PaymentHistory from './PaymentHistory';
 
 // Zod validation schemas
 const userProfileSchema = z.object({
@@ -730,6 +727,9 @@ const UserProfile: React.FC<UserProfileProps> = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Payment History */}
+      {user && <PaymentHistory userId={user.id.toString()} />}
     </Container>
   );
 };

@@ -1,5 +1,6 @@
 // Services/IEmailService.cs
 using NetworkingApp.Models;
+using NetworkingApp.Models.DTOs;
 
 namespace NetworkingApp.Services
 {
@@ -86,5 +87,12 @@ namespace NetworkingApp.Services
         /// <param name="ratingLink">Link to rate the service</param>
         Task SendServiceCompletionEmailAsync(string userEmail, string userName, 
             string serviceType, string partnerName, string ratingLink);
+
+        /// <summary>
+        /// Sends a receipt email
+        /// </summary>
+        /// <param name="toEmail">Recipient's email address</param>
+        /// <param name="receipt">Receipt details</param>
+        Task SendReceiptEmailAsync(string toEmail, ReceiptDto receipt);
     }
 }

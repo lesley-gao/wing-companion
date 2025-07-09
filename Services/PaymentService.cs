@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using NetworkingApp.Data;
 using NetworkingApp.Models;
+using NetworkingApp.Models.DTOs;
 using Stripe;
 
 namespace NetworkingApp.Services
@@ -13,9 +16,12 @@ namespace NetworkingApp.Services
     public class PaymentService
     {
         private readonly ApplicationDbContext _dbContext;
-        public PaymentService(ApplicationDbContext dbContext)
+        private readonly IEmailService _emailService;
+
+        public PaymentService(ApplicationDbContext dbContext, IEmailService emailService)
         {
             _dbContext = dbContext;
+            _emailService = emailService;
         }
 
         /// <summary>
@@ -60,6 +66,62 @@ namespace NetworkingApp.Services
             if (escrow.Payment != null)
                 escrow.Payment.Status = PaymentStatus.Released.ToString();
             await _dbContext.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Confirms payment and generates a receipt.
+        /// </summary>
+        /// <param name="paymentIntentId">The payment intent ID from Stripe.</param>
+        /// <param name="userId">The ID of the user receiving the receipt.</param>
+        /// <returns>A task that represents the asynchronous operation, containing the receipt data transfer object.</returns>
+        public async Task<ReceiptDto?> ConfirmAndGenerateReceiptAsync(string paymentIntentId, string userId)
+        {
+            // 1. Retrieve payment from Stripe
+            var service = new PaymentIntentService();
+            var paymentIntent = await service.GetAsync(paymentIntentId);
+
+            if (paymentIntent.Status != "succeeded")
+                return null;
+
+            // 2. Update Payment/Escrow status in DB (pseudo-code)
+            // var payment = await _db.Payments.FirstOrDefaultAsync(p => p.PaymentIntentId == paymentIntentId);
+            // payment.Status = PaymentStatus.Confirmed;
+            // await _db.SaveChangesAsync();
+
+            // 3. Generate receipt
+            var receipt = new ReceiptDto
+            {
+                ReceiptId = Guid.NewGuid().ToString(),
+                PaymentIntentId = paymentIntentId,
+                UserEmail = paymentIntent.ReceiptEmail,
+                Amount = (decimal)paymentIntent.AmountReceived / 100,
+                Currency = paymentIntent.Currency.ToUpper(),
+                PaidAt = DateTime.UtcNow,
+                ServiceType = "Flight Companion / Pickup", // Set appropriately
+                PdfUrl = null // Set if you generate a PDF
+            };
+
+            // 4. Email receipt
+            await _emailService.SendReceiptEmailAsync(receipt.UserEmail, receipt);
+
+            // 5. Optionally, store receipt in DB
+
+            return receipt;
+        }
+
+        /// <summary>
+        /// Gets the payment history for a user.
+        /// </summary>
+        /// <param name="userId">The user's ID.</param>
+        /// <returns>List of payments for the user.</returns>
+        public async Task<List<Payment>> GetPaymentHistoryAsync(string userId)
+        {
+            if (!int.TryParse(userId, out int userIdInt))
+                throw new ArgumentException("Invalid userId");
+            return await _dbContext.Payments
+                .Where(p => p.PayerId == userIdInt || p.ReceiverId == userIdInt)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
         }
     }
 }

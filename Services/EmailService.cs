@@ -4,6 +4,8 @@ using System.Net.Mail;
 using System.Text;
 using Microsoft.Extensions.Options;
 using NetworkingApp.Models;
+using NetworkingApp.Models.DTOs;
+using System.Threading.Tasks;
 
 namespace NetworkingApp.Services
 {
@@ -183,6 +185,20 @@ namespace NetworkingApp.Services
                 _logger.LogError(ex, "Failed to send service completion email to {UserEmail}", userEmail);
                 throw;
             }
+        }
+
+        public async Task SendReceiptEmailAsync(string toEmail, ReceiptDto receipt)
+        {
+            var subject = "Your Payment Receipt";
+            var body = $@"
+                <h2>Payment Receipt</h2>
+                <p>Receipt ID: {receipt.ReceiptId}</p>
+                <p>Amount: {receipt.Amount} {receipt.Currency}</p>
+                <p>Paid At: {receipt.PaidAt.ToLocalTime()}</p>
+                <p>Service: {receipt.ServiceType}</p>
+            ";
+            // Use your existing email sending logic
+            await SendEmailAsync(toEmail, subject, body, false);
         }
 
         private async Task SendEmailAsync(string toEmail, string subject, string body, bool isHighPriority = false)

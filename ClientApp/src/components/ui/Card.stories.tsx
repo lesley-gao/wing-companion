@@ -1,5 +1,6 @@
 // ClientApp/src/components/ui/Card.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react-webpack5';
+import React from 'react';
+import { Meta, StoryObj } from '@storybook/react';
 import { Card } from './Card';
 import { Button } from './Button';
 import { Avatar, IconButton } from '@mui/material';

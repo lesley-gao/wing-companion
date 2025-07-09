@@ -1,5 +1,6 @@
 // ClientApp/src/components/ui/Input.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react-webpack5';
+import React from 'react';
+import { Meta, StoryObj } from '@storybook/react';
 import Input from './Input';
 import { Email, Search} from '@mui/icons-material';
 

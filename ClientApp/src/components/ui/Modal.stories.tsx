@@ -1,5 +1,6 @@
 // ClientApp/src/components/ui/Modal.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react-webpack5';
+import React from 'react';
+import { Meta, StoryObj } from '@storybook/react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import Input from './Input';
