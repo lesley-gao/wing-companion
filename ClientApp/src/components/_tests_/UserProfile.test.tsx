@@ -1,65 +1,58 @@
 // ClientApp/src/components/__tests__/UserProfile.test.tsx
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import UserProfile from '../UserProfile';
-
-// Mock fetch
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
-
-// Mock localStorage
-const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-};
-Object.defineProperty(window, 'localStorage', {
-  value: mockLocalStorage,
-});
+import authSlice from '../../store/slices/authSlice';
+import uiSlice from '../../store/slices/uiSlice';
 
 const theme = createTheme();
 
-const mockVerifiedUser = {
-  id: 1,
-  email: 'john.doe@email.com',
-  firstName: 'John',
-  lastName: 'Doe',
-  phoneNumber: '+64211234567',
-  preferredLanguage: 'English',
-  isVerified: true,
-  emergencyContact: 'Jane Doe',
-  emergencyPhone: '+64211234568',
-  rating: 4.5,
-  totalRatings: 12,
-  createdAt: '2024-01-01T00:00:00Z',
-  lastLoginAt: '2024-12-01T10:00:00Z',
-};
+const createMockStore = (initialAuthState = {}) => {
+  const mockState = {
+    auth: {
+      user: {
+        id: 1,
+        email: 'test@example.com',
+        firstName: 'Test',
+        lastName: 'User',
+        phoneNumber: '+64 21 123 4567',
+        preferredLanguage: 'English',
+        emergencyContact: 'Emergency Contact',
+        emergencyPhone: '+64 21 987 6543',
+        isVerified: true,
+        profilePicture: undefined, // Changed from null to undefined
+        ...initialAuthState,
+      },
+      token: 'mock-jwt-token',
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+    },
+    ui: {
+      theme: 'light' as const,
+      isDrawerOpen: false,
+      notifications: [],
+      isLoading: false,
+      currentPage: '/',
+      searchQuery: '',
+    },
+  };
 
-const mockStats = {
-  totalFlightCompanionRequests: 3,
-  totalFlightCompanionOffers: 5,
-  totalPickupRequests: 2,
-  totalPickupOffers: 4,
-  completedServices: 8,
-  averageRating: 4.5,
-  totalRatings: 12,
-};
-
-const createMockStore = (user: any = mockVerifiedUser, isAuthenticated = true) => {
   return configureStore({
     reducer: {
-      auth: (state = {
-        user,
-        isAuthenticated,
-        isLoading: false,
-        error: null,
-      }) => state,
+      auth: authSlice,
+      ui: uiSlice,
     },
+    preloadedState: mockState,
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+        serializableCheck: false,
+      }),
   });
 };
 
@@ -76,330 +69,179 @@ const renderWithProviders = (ui: React.ReactElement, store = createMockStore()) 
 };
 
 describe('UserProfile Component', () => {
-  beforeEach(() => {
-    mockFetch.mockClear();
-    mockLocalStorage.getItem.mockReturnValue('mock-token');
-  });
-
-  describe('Authentication States', () => {
-    it('shows loading state when user data is being fetched', () => {
-      const loadingStore = createMockStore(null, true);
-      mockFetch.mockImplementation(() => new Promise(() => {})); // Never resolves
-      
-      renderWithProviders(<UserProfile />, loadingStore);
-      
-      expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  describe('Initial Rendering', () => {
+    it('renders user profile heading', () => {
+      renderWithProviders(<UserProfile />);
+      expect(screen.getByText(/User Profile/i)).toBeInTheDocument();
     });
 
-    it('shows unauthenticated message when user is not logged in', () => {
-      const unauthStore = createMockStore(null, false);
+    it('displays user information', () => {
+      renderWithProviders(<UserProfile />);
       
-      renderWithProviders(<UserProfile />, unauthStore);
-      
-      expect(screen.getByText('Please log in to view your profile.')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Test')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('User')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('+64 21 123 4567')).toBeInTheDocument();
+    });
+
+    it('shows verification status', () => {
+      renderWithProviders(<UserProfile />);
+      expect(screen.getByText(/Verified/i)).toBeInTheDocument();
     });
   });
 
-  describe('Profile Display', () => {
-    beforeEach(() => {
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockVerifiedUser),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockStats),
-        });
-    });
-
-    it('renders user profile information correctly', async () => {
-      renderWithProviders(<UserProfile />);
-
-      // Wait for the first element to appear, then check all elements
-      await waitFor(() => {
-        expect(screen.getByDisplayValue('John')).toBeInTheDocument();
-      });
-
-      // Once loaded, all other elements should be present immediately
-      expect(screen.getByDisplayValue('Doe')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('john.doe@email.com')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('+64211234567')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('English')).toBeInTheDocument();
-    });
-
-    it('shows verification status correctly', async () => {
-      renderWithProviders(<UserProfile />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Verified')).toBeInTheDocument();
-      });
-    });
-
-    it('renders activity statistics', async () => {
-      renderWithProviders(<UserProfile />);
-
-      // Wait for the first statistic to appear
-      await waitFor(() => {
-        expect(screen.getByText('5')).toBeInTheDocument(); // Requests Created (3+2)
-      });
-
-      // Once loaded, check all other statistics
-      expect(screen.getByText('9')).toBeInTheDocument(); // Services Offered (5+4)
-      expect(screen.getByText('8')).toBeInTheDocument(); // Completed Services
-      expect(screen.getByText('4.5/5.0')).toBeInTheDocument(); // Average Rating
-    });
-  });
-
-  describe('Profile Editing', () => {
-    beforeEach(() => {
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockVerifiedUser),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockStats),
-        });
-    });
-
-    it('enters edit mode when edit button is clicked', async () => {
+  describe('Form Validation', () => {
+    it('validates email format', async () => {
       const user = userEvent.setup();
       renderWithProviders(<UserProfile />);
-
+      
+      const emailInput = screen.getByDisplayValue('test@example.com');
+      await user.clear(emailInput);
+      await user.type(emailInput, 'invalid-email');
+      
+      fireEvent.blur(emailInput);
+      
       await waitFor(() => {
-        expect(screen.getByText('Edit')).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByText('Edit'));
-
-      expect(screen.getByText('Cancel')).toBeInTheDocument();
-      expect(screen.getByText('Save Changes')).toBeInTheDocument();
-    });
-
-    it('validates required fields', async () => {
-      const user = userEvent.setup();
-      renderWithProviders(<UserProfile />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Edit')).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByText('Edit'));
-
-      // Clear first name
-      const firstNameInput = screen.getByDisplayValue('John');
-      await user.clear(firstNameInput);
-      await user.click(screen.getByText('Save Changes'));
-
-      await waitFor(() => {
-        expect(screen.getByText('First name is required')).toBeInTheDocument();
+        expect(screen.getByText(/Invalid email format/i)).toBeInTheDocument();
       });
     });
 
     it('validates phone number format', async () => {
       const user = userEvent.setup();
       renderWithProviders(<UserProfile />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Edit')).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByText('Edit'));
-
-      // Enter invalid phone number
-      const phoneInput = screen.getByDisplayValue('+64211234567');
+      
+      const phoneInput = screen.getByDisplayValue('+64 21 123 4567');
       await user.clear(phoneInput);
-      await user.type(phoneInput, 'invalid-phone');
-      await user.click(screen.getByText('Save Changes'));
-
+      await user.type(phoneInput, '123');
+      
+      fireEvent.blur(phoneInput);
+      
       await waitFor(() => {
-        expect(screen.getByText('Phone number must be in format +64XXXXXXXX')).toBeInTheDocument();
+        expect(screen.getByText(/Invalid phone number/i)).toBeInTheDocument();
       });
     });
 
-    it('saves profile changes successfully', async () => {
+    it('validates required fields', async () => {
       const user = userEvent.setup();
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockVerifiedUser),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockStats),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ ...mockVerifiedUser, firstName: 'Jane' }),
-        });
-
       renderWithProviders(<UserProfile />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Edit')).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByText('Edit'));
-
-      // Update first name
-      const firstNameInput = screen.getByDisplayValue('John');
+      
+      const firstNameInput = screen.getByDisplayValue('Test');
       await user.clear(firstNameInput);
-      await user.type(firstNameInput, 'Jane');
-
-      await user.click(screen.getByText('Save Changes'));
-
+      
+      fireEvent.blur(firstNameInput);
+      
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/user/profile', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer mock-token',
-          },
-          body: JSON.stringify({
-            firstName: 'Jane',
-            lastName: 'Doe',
-            phoneNumber: '+64211234567',
-            preferredLanguage: 'English',
-            emergencyContact: 'Jane Doe',
-            emergencyPhone: '+64211234568',
-          }),
-        });
+        expect(screen.getByText(/First name is required/i)).toBeInTheDocument();
       });
     });
   });
 
-  describe('Verification Submission', () => {
-    const unverifiedUser = { ...mockVerifiedUser, isVerified: false };
-
-    beforeEach(() => {
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(unverifiedUser),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockStats),
-        });
-    });
-
-    it('shows verification button for unverified users', async () => {
-      const unverifiedStore = createMockStore(unverifiedUser);
-      renderWithProviders(<UserProfile />, unverifiedStore);
-
-      await waitFor(() => {
-        expect(screen.getByText('Submit Verification')).toBeInTheDocument();
-      });
-    });
-
-    it('opens verification dialog when button is clicked', async () => {
+  describe('Form Submission', () => {
+    it('submits valid profile updates', async () => {
       const user = userEvent.setup();
-      const unverifiedStore = createMockStore(unverifiedUser);
-      renderWithProviders(<UserProfile />, unverifiedStore);
-
+      renderWithProviders(<UserProfile />);
+      
+      const firstNameInput = screen.getByDisplayValue('Test');
+      await user.clear(firstNameInput);
+      await user.type(firstNameInput, 'Updated Name');
+      
+      const saveButton = screen.getByRole('button', { name: /save changes/i });
+      await user.click(saveButton);
+      
       await waitFor(() => {
-        expect(screen.getByText('Submit Verification')).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByText('Submit Verification'));
-
-      expect(screen.getByText('Submit Verification Documents')).toBeInTheDocument();
-    });
-
-    it('validates verification document references', async () => {
-      const user = userEvent.setup();
-      const unverifiedStore = createMockStore(unverifiedUser);
-      renderWithProviders(<UserProfile />, unverifiedStore);
-
-      await waitFor(() => {
-        expect(screen.getByText('Submit Verification')).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByText('Submit Verification'));
-
-      // Try to submit empty form
-      await user.click(screen.getByRole('button', { name: /submit/i }));
-
-      await waitFor(() => {
-        expect(screen.getByText('Document references must be at least 10 characters')).toBeInTheDocument();
+        expect(screen.getByText(/Profile updated successfully/i)).toBeInTheDocument();
       });
     });
 
-    it('submits verification documents successfully', async () => {
+    it('handles submission errors', async () => {
       const user = userEvent.setup();
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ message: 'Verification submitted' }),
-      });
-
-      const unverifiedStore = createMockStore(unverifiedUser);
-      renderWithProviders(<UserProfile />, unverifiedStore);
-
+      const store = createMockStore({ error: 'Update failed' });
+      renderWithProviders(<UserProfile />, store);
+      
+      const saveButton = screen.getByRole('button', { name: /save changes/i });
+      await user.click(saveButton);
+      
       await waitFor(() => {
-        expect(screen.getByText('Submit Verification')).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByText('Submit Verification'));
-
-      // Fill in document references
-      const textarea = screen.getByLabelText('Document References');
-      await user.type(textarea, 'Passport: 1234567890, Driver License: DL123456');
-
-      await user.click(screen.getByRole('button', { name: /submit/i }));
-
-      await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/user/submit-verification', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer mock-token',
-          },
-          body: JSON.stringify({
-            documentReferences: 'Passport: 1234567890, Driver License: DL123456',
-          }),
-        });
+        expect(screen.getByText(/Update failed/i)).toBeInTheDocument();
       });
     });
   });
 
-  describe('Error Handling', () => {
-    it('handles profile fetch error gracefully', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Network error'));
-
+  describe('Emergency Contact', () => {
+    it('displays emergency contact information', () => {
       renderWithProviders(<UserProfile />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Error loading profile')).toBeInTheDocument();
-      });
+      
+      expect(screen.getByDisplayValue('Emergency Contact')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('+64 21 987 6543')).toBeInTheDocument();
     });
 
-    it('handles profile update error gracefully', async () => {
+    it('validates emergency contact fields', async () => {
       const user = userEvent.setup();
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockVerifiedUser),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockStats),
-        })
-        .mockRejectedValueOnce(new Error('Update failed'));
-
       renderWithProviders(<UserProfile />);
-
+      
+      const emergencyNameInput = screen.getByDisplayValue('Emergency Contact');
+      await user.clear(emergencyNameInput);
+      
+      fireEvent.blur(emergencyNameInput);
+      
       await waitFor(() => {
-        expect(screen.getByText('Edit')).toBeInTheDocument();
+        expect(screen.getByText(/Emergency contact name is required/i)).toBeInTheDocument();
       });
+    });
+  });
 
-      await user.click(screen.getByText('Edit'));
-      await user.click(screen.getByText('Save Changes'));
+  describe('Profile Picture', () => {
+    it('shows upload profile picture option', () => {
+      renderWithProviders(<UserProfile />);
+      expect(screen.getByText(/Upload Profile Picture/i)).toBeInTheDocument();
+    });
 
-      await waitFor(() => {
-        expect(screen.getByText('Error updating profile')).toBeInTheDocument();
-      });
+    it('handles file upload', async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<UserProfile />);
+      
+      const file = new File(['test'], 'profile.jpg', { type: 'image/jpeg' });
+      const fileInput = screen.getByLabelText(/upload profile picture/i) as HTMLInputElement;
+      
+      await user.upload(fileInput, file);
+      
+      expect(fileInput.files![0]).toBe(file);
+    });
+  });
+
+  describe('Loading States', () => {
+    it('shows loading state when updating', () => {
+      const store = createMockStore({ isLoading: true });
+      renderWithProviders(<UserProfile />, store);
+      
+      expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    });
+
+    it('disables form during loading', () => {
+      const store = createMockStore({ isLoading: true });
+      renderWithProviders(<UserProfile />, store);
+      
+      const saveButton = screen.getByRole('button', { name: /save changes/i });
+      expect(saveButton).toBeDisabled();
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('has proper form labels', () => {
+      renderWithProviders(<UserProfile />);
+      
+      expect(screen.getByLabelText(/First Name/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Last Name/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Phone/i)).toBeInTheDocument();
+    });
+
+    it('supports keyboard navigation', async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<UserProfile />);
+      
+      await user.tab();
+      expect(screen.getByDisplayValue('Test')).toHaveFocus();
     });
   });
 });
