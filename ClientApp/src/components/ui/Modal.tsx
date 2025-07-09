@@ -1,3 +1,4 @@
+// Enhanced Modal component with comprehensive responsive design
 // ClientApp/src/components/ui/Modal.tsx
 import React from 'react';
 import {
@@ -13,6 +14,8 @@ import {
   Grow,
   Paper,
   Backdrop,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { TransitionProps } from '@mui/material/transitions';
@@ -22,23 +25,24 @@ import { SxProps, Theme } from '@mui/material/styles';
 // TypeScript interfaces
 export interface ModalProps {
   open: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
+  onClose?: () => void;
   title?: string;
   subtitle?: string;
+  children: React.ReactNode;
   actions?: React.ReactNode;
   maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
   fullWidth?: boolean;
   fullScreen?: boolean;
-  disableBackdropClick?: boolean;
-  disableEscapeKeyDown?: boolean;
-  showCloseButton?: boolean;
   transition?: 'fade' | 'slide' | 'zoom' | 'grow';
+  showCloseButton?: boolean;
   className?: string;
   sx?: SxProps<Theme>;
-  'data-testid'?: string;
-  scroll?: 'paper' | 'body';
-  dividers?: boolean;
+  'aria-labelledby'?: string;
+  'aria-describedby'?: string;
+  disableEscapeKeyDown?: boolean;
+  disableBackdropClick?: boolean;
+  keepMounted?: boolean;
+  responsive?: boolean; // Auto-adapt to mobile
 }
 
 export interface ModalHeaderProps {
@@ -51,15 +55,22 @@ export interface ModalHeaderProps {
 
 export interface ModalContentProps {
   children: React.ReactNode;
-  dividers?: boolean;
   className?: string;
   sx?: SxProps<Theme>;
+  dividers?: boolean;
 }
 
 export interface ModalActionsProps {
   children: React.ReactNode;
   className?: string;
   sx?: SxProps<Theme>;
+}
+
+// Define the compound component type
+interface ModalComponent extends React.FC<ModalProps> {
+  Header: React.FC<ModalHeaderProps>;
+  Content: React.FC<ModalContentProps>;
+  Actions: React.FC<ModalActionsProps>;
 }
 
 // Transition components
@@ -81,13 +92,29 @@ const GrowTransition = React.forwardRef<unknown, TransitionProps & { children: R
   }
 );
 
-// Styled components
+// Styled components with enhanced responsive design
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
     borderRadius: theme.spacing(1.5), // 12px
     boxShadow: theme.shadows[16],
     margin: theme.spacing(2),
     maxHeight: 'calc(100vh - 32px)',
+    width: '100%',
+    
+    // Enhanced responsive behavior
+    [theme.breakpoints.down('sm')]: {
+      margin: theme.spacing(1),
+      maxHeight: 'calc(100vh - 16px)',
+      borderRadius: theme.spacing(1),
+    },
+    
+    // Full screen on very small devices
+    [theme.breakpoints.down(400)]: {
+      margin: 0,
+      maxHeight: '100vh',
+      height: '100vh',
+      borderRadius: 0,
+    },
   },
   
   '& .MuiBackdrop-root': {
@@ -108,6 +135,17 @@ const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
     fontWeight: 600,
     fontSize: '1.25rem',
     lineHeight: 1.2,
+    
+    // Responsive text sizing
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '1.125rem',
+    },
+  },
+  
+  // Responsive padding
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+    paddingBottom: theme.spacing(1.5),
   },
 }));
 
@@ -118,6 +156,18 @@ const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
     borderTop: `1px solid ${theme.palette.divider}`,
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
+  
+  // Responsive padding
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+  },
+  
+  // Enhanced scrolling on mobile
+  [theme.breakpoints.down('sm')]: {
+    maxHeight: 'calc(100vh - 200px)',
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch',
+  },
 }));
 
 const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
@@ -126,6 +176,17 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
   
   '& .MuiButton-root': {
     minWidth: theme.spacing(10),
+    minHeight: theme.spacing(5.5), // Touch-friendly size
+  },
+  
+  // Responsive layout
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+    flexDirection: 'column-reverse',
+    '& .MuiButton-root': {
+      width: '100%',
+      margin: 0,
+    },
   },
 }));
 
@@ -158,15 +219,20 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({
       sx={sx}
       {...props}
     >
-      <div>{children}</div>
+      <div className="flex-1">{children}</div>
       {showCloseButton && onClose && (
         <IconButton
           onClick={onClose}
           size="small"
-          className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-          sx={{ ml: 2 }}
+          className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 ml-2"
+          sx={{ 
+            minWidth: 'auto',
+            minHeight: { xs: 40, sm: 32 }, // Larger touch target on mobile
+            padding: { xs: 1.5, sm: 1 },
+          }}
+          aria-label="Close dialog"
         >
-          <CloseIcon />
+          <CloseIcon fontSize="small" />
         </IconButton>
       )}
     </StyledDialogTitle>
@@ -176,16 +242,16 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({
 // Modal Content component
 const ModalContent: React.FC<ModalContentProps> = ({
   children,
-  dividers = false,
   className = '',
   sx,
+  dividers = false,
   ...props
 }) => {
   return (
     <StyledDialogContent
-      dividers={dividers}
-      className={`${className} text-gray-900 dark:text-white bg-white dark:bg-gray-800`.trim()}
+      className={`${className} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`.trim()}
       sx={sx}
+      dividers={dividers}
       {...props}
     >
       {children}
@@ -211,48 +277,66 @@ const ModalActions: React.FC<ModalActionsProps> = ({
   );
 };
 
-// Main Modal component
-const ModalComponent: React.FC<ModalProps> = ({
+// Main Modal component with enhanced responsive behavior
+const ModalBase: React.FC<ModalProps> = ({
   open,
   onClose,
-  children,
   title,
   subtitle,
+  children,
   actions,
   maxWidth = 'sm',
   fullWidth = true,
   fullScreen = false,
-  disableBackdropClick = false,
-  disableEscapeKeyDown = false,
-  showCloseButton = true,
   transition = 'fade',
+  showCloseButton = true,
   className = '',
   sx,
-  'data-testid': testId,
-  scroll = 'paper',
-  dividers = false,
+  responsive = true,
+  disableEscapeKeyDown = false,
+  disableBackdropClick = false,
+  keepMounted = false,
   ...props
 }) => {
-  const handleClose = (_: any, reason: 'backdropClick' | 'escapeKeyDown') => {
-    if (reason === 'backdropClick' && disableBackdropClick) return;
-    if (reason === 'escapeKeyDown' && disableEscapeKeyDown) return;
-    onClose();
-  };
-
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isExtraSmall = useMediaQuery('(max-width: 400px)');
+  
+  // Auto-adjust for responsive behavior
+  const responsiveFullScreen = responsive && (fullScreen || isExtraSmall);
+  const responsiveMaxWidth = responsive && isMobile ? false : maxWidth;
+  
   const TransitionComponent = getTransitionComponent(transition);
+
+  const handleClose = (_event: object, reason: string) => {
+    if (disableBackdropClick && reason === 'backdropClick') return;
+    if (disableEscapeKeyDown && reason === 'escapeKeyDown') return;
+    onClose?.();
+  };
 
   return (
     <StyledDialog
       open={open}
       onClose={handleClose}
-      TransitionComponent={TransitionComponent}
-      maxWidth={maxWidth}
+      maxWidth={responsiveMaxWidth}
       fullWidth={fullWidth}
-      fullScreen={fullScreen}
-      scroll={scroll}
-      className={`${className}`.trim()}
-      sx={sx}
-      data-testid={testId}
+      fullScreen={responsiveFullScreen}
+      TransitionComponent={TransitionComponent}
+      keepMounted={keepMounted}
+      className={`${className} dialog-responsive`.trim()}
+      sx={{
+        '& .MuiDialog-paper': {
+          // Additional responsive adjustments
+          ...(responsive && {
+            [theme.breakpoints.up('sm')]: {
+              minWidth: '400px',
+            },
+          }),
+        },
+        ...sx,
+      }}
+      aria-labelledby={title ? 'modal-title' : undefined}
+      aria-describedby={subtitle ? 'modal-subtitle' : undefined}
       slots={{
         backdrop: Backdrop,
       }}
@@ -266,59 +350,50 @@ const ModalComponent: React.FC<ModalProps> = ({
       <Paper className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
         {/* Header */}
         {(title || showCloseButton) && (
-          <StyledDialogTitle className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <ModalHeader onClose={onClose} showCloseButton={showCloseButton}>
             <div>
               {title && (
-                <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                <div 
+                  id="modal-title"
+                  className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white"
+                >
                   {title}
                 </div>
               )}
               {subtitle && (
-                <DialogContentText className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                <DialogContentText 
+                  id="modal-subtitle"
+                  className="text-sm text-gray-600 dark:text-gray-300 mt-1"
+                >
                   {subtitle}
                 </DialogContentText>
               )}
             </div>
-            {showCloseButton && (
-              <IconButton
-                onClick={onClose}
-                size="small"
-                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                sx={{ ml: 2 }}
-              >
-                <CloseIcon />
-              </IconButton>
-            )}
-          </StyledDialogTitle>
+          </ModalHeader>
         )}
 
         {/* Content */}
-        <StyledDialogContent
-          dividers={dividers}
-          className="text-gray-900 dark:text-white bg-white dark:bg-gray-800"
-        >
+        <ModalContent>
           {children}
-        </StyledDialogContent>
+        </ModalContent>
 
         {/* Actions */}
         {actions && (
-          <StyledDialogActions className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+          <ModalActions>
             {actions}
-          </StyledDialogActions>
+          </ModalActions>
         )}
       </Paper>
     </StyledDialog>
   );
 };
 
-// Create the compound component using Object.assign
-export const Modal = Object.assign(ModalComponent, {
-  Header: ModalHeader,
-  Content: ModalContent,
-  Actions: ModalActions,
-});
+// Create the compound component with proper typing
+export const Modal = ModalBase as ModalComponent;
 
-// Export individual components as well
-export { ModalHeader, ModalContent, ModalActions };
+// Attach the sub-components with proper typing
+Modal.Header = ModalHeader;
+Modal.Content = ModalContent;
+Modal.Actions = ModalActions;
 
 export default Modal;

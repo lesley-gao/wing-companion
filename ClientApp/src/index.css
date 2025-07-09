@@ -12,23 +12,163 @@ body {
   font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Enable momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Custom component classes */
+/* Responsive utilities */
+@layer base {
+  /* Safe area support for mobile devices */
+  html {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* Ensure proper text sizing on mobile */
+  @media screen and (max-width: 640px) {
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+  }
+}
+
+/* Custom component classes with responsive patterns */
 @layer components {
   .btn-primary {
     @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply min-h-touch; /* Ensure touch-friendly size */
   }
   
   .btn-secondary {
     @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply min-h-touch;
   }
   
   .card {
-    @apply bg-white rounded-lg shadow-md p-6 mb-4;
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 mb-4;
+    @apply transition-shadow duration-300 hover:shadow-card-hover;
   }
   
   .form-input {
-    @apply border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    @apply border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    @apply bg-white dark:bg-gray-700 text-gray-900 dark:text-white;
+    @apply min-h-touch; /* Touch-friendly input size */
+  }
+  
+  /* Responsive container patterns */
+  .container-responsive {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .container-form {
+    @apply w-full max-w-form mx-auto px-4 sm:px-6;
+  }
+  
+  /* Responsive grid patterns */
+  .grid-responsive {
+    @apply grid gap-4 sm:gap-6;
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  
+  .grid-cards {
+    @apply grid gap-4 sm:gap-6;
+    @apply grid-cols-1 md:grid-cols-2 lg:grid-cols-3;
+  }
+  
+  /* Responsive text patterns */
+  .text-responsive-title {
+    @apply text-xl sm:text-2xl lg:text-3xl font-bold;
+  }
+  
+  .text-responsive-subtitle {
+    @apply text-lg sm:text-xl font-medium;
+  }
+  
+  .text-responsive-body {
+    @apply text-sm sm:text-base;
+  }
+  
+  /* Responsive spacing patterns */
+  .spacing-section {
+    @apply py-8 sm:py-12 lg:py-16;
+  }
+  
+  .spacing-component {
+    @apply mb-4 sm:mb-6 lg:mb-8;
+  }
+  
+  /* Mobile-first navigation patterns */
+  .nav-mobile {
+    @apply fixed inset-x-0 top-0 z-50 bg-white dark:bg-gray-800;
+    @apply border-b border-gray-200 dark:border-gray-700;
+    @apply md:static md:border-0;
+  }
+  
+  /* Responsive dialog/modal patterns */
+  .dialog-responsive {
+    @apply w-full max-w-dialog mx-4 sm:mx-auto;
+    @apply max-h-screen overflow-y-auto;
+  }
+}
+
+/* Responsive utilities */
+@layer utilities {
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Touch-friendly interaction utilities */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  /* Safe area utilities */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Focus styles for accessibility */
+@layer base {
+  *:focus {
+    @apply outline-2 outline-offset-2 outline-blue-500;
+  }
+  
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+  
+  .card {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
