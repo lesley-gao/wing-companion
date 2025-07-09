@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Container,
@@ -33,19 +33,19 @@ import {
   Help as HelpIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { useAppDispatch} from '../store/hooks';
 import { addNotification } from '../store/slices/uiSlice';
 import { 
-  fetchRequests, 
-  fetchOffers, 
-  createRequest,
+  useGetFlightCompanionRequestsQuery,
+  useGetFlightCompanionOffersQuery,
+  useCreateFlightCompanionRequestMutation,
   type FlightCompanionRequest,
-  type FlightCompanionOffer 
-} from '../store/slices/flightCompanionSlice';
+  type FlightCompanionOffer,
+  type CreateFlightCompanionRequestData
+} from '../store/api/flightCompanionApi';
 
 // TypeScript Interfaces
 interface RequestFormData {
-  userId: number;
   flightNumber: string;
   airline: string;
   flightDate: string;
@@ -77,25 +77,31 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
 
   // Redux Integration
   const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
-  const { requests, offers, isLoading, error } = useAppSelector(state => state.flightCompanion);
+  //const { user } = useAppSelector((state) => state.auth);
   
-  // Effects
-  useEffect(() => {
-    dispatch(fetchRequests());
-    dispatch(fetchOffers());
-  }, [dispatch]);
+  // RTK Query hooks replace manual fetch calls and Redux slice integration
+  const {
+    data: requests = [],
+    isLoading: requestsLoading,
+    error: requestsError,
+    refetch: refetchRequests
+  } = useGetFlightCompanionRequestsQuery();
+  
+  const {
+    data: offers = [],
+    isLoading: offersLoading,
+    error: offersError,
+    refetch: refetchOffers
+  } = useGetFlightCompanionOffersQuery();
+  
+  const [createRequest, { isLoading: createRequestLoading }] = useCreateFlightCompanionRequestMutation();
 
-  // Show error if it exists
-  useEffect(() => {
-    if (error) {
-      showSnackbar(error, 'error');
-    }
-  }, [error]);
+  // Loading and error states
+  const isLoading = requestsLoading || offersLoading;
+  const error = requestsError || offersError;
 
   // Form Data
   const [formData, setFormData] = useState<RequestFormData>({
-    userId: user?.id || 1,
     flightNumber: '',
     airline: '',
     flightDate: '',
@@ -149,8 +155,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
     event.preventDefault();
     
     try {
-      // Create the request data without userId (it will be added by the backend)
-      const requestData = {
+      const requestData: CreateFlightCompanionRequestData = {
         flightNumber: formData.flightNumber,
         airline: formData.airline,
         flightDate: formData.flightDate,
@@ -161,27 +166,24 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
         specialNeeds: formData.specialNeeds,
         offeredAmount: Number(formData.offeredAmount),
         additionalNotes: formData.additionalNotes,
-        userId: user?.id || 1,
       };
 
-      // Dispatch Redux action to create request
-      const result = await dispatch(createRequest(requestData));
+      // Use RTK Query mutation instead of manual fetch
+      await createRequest(requestData).unwrap();
       
-      if (createRequest.fulfilled.match(result)) {
-        dispatch(addNotification({
-          message: 'Flight companion request created successfully!',
-          type: 'success',
-        }));
-        
-        setShowCreateForm(false);
-        resetForm();
-      } else {
-        throw new Error(result.payload as string || 'Failed to create request');
-      }
+      dispatch(addNotification({
+        message: 'Flight companion request created successfully!',
+        type: 'success',
+      }));
+      
+      setShowCreateForm(false);
+      resetForm();
+      
     } catch (error) {
       console.error('Error creating request:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error creating request';
       showSnackbar(errorMessage, 'error');
+      
       dispatch(addNotification({
         message: 'Failed to create flight companion request',
         type: 'error',
@@ -191,7 +193,6 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
 
   const resetForm = (): void => {
     setFormData({
-      userId: user?.id || 1,
       flightNumber: '',
       airline: '',
       flightDate: '',
@@ -221,35 +222,63 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
     message: string,
     severity: 'success' | 'error' | 'info' | 'warning'
   ): void => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
-    });
+    setSnackbar({ open: true, message, severity });
   };
 
-  const handleSnackbarClose = (): void => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
+  const closeSnackbar = (): void => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
-  // Render Components
-  const renderRequestCard = (request: FlightCompanionRequest) => (
-    <Card
-      key={request.id}
-      className="hover:shadow-lg transition-shadow duration-300"
-      sx={{ mb: 2 }}
-    >
+  // Render Functions
+  const renderRequestCard = (request: FlightCompanionRequest): JSX.Element => (
+    <Card key={request.id} className="h-full hover:shadow-lg transition-shadow duration-200">
       <CardContent>
         <Box className="flex justify-between items-start mb-3">
-          <Box>
-            <Typography variant="h6" className="flex items-center gap-2 text-gray-800 dark:text-white">
-              <FlightIcon color="primary" />
+          <Box className="flex items-center space-x-2">
+            <FlightIcon className="text-blue-600" />
+            <Typography variant="h6" className="font-semibold text-gray-900 dark:text-gray-100">
               {request.flightNumber} - {request.airline}
             </Typography>
-            <Typography variant="body2" color="primary" className="font-medium">
-              {request.departureAirport} → {request.arrivalAirport}
-            </Typography>
           </Box>
+          <Chip
+            label={`${request.departureAirport} → ${request.arrivalAirport}`}
+            size="small"
+            className="bg-blue-100 text-blue-800"
+          />
+        </Box>
+
+        <Box className="space-y-2 mb-3">
+          <Typography variant="body2" className="text-gray-600 dark:text-gray-300">
+            <strong>Date:</strong> {new Date(request.flightDate).toLocaleDateString()}
+          </Typography>
+
+          {request.travelerName && (
+            <Typography variant="body2" className="text-gray-600 dark:text-gray-300">
+              <PersonIcon className="inline w-4 h-4 mr-1" />
+              <strong>Traveler:</strong> {request.travelerName}
+            </Typography>
+          )}
+
+          {request.specialNeeds && (
+            <Box className="mb-2">
+              <Typography variant="body2" className="text-gray-600 dark:text-gray-300">
+                <HelpIcon className="inline w-4 h-4 mr-1" />
+                <strong>Help Needed:</strong>
+              </Typography>
+              <Typography variant="body2" className="ml-5 text-gray-700 dark:text-gray-200">
+                {request.specialNeeds}
+              </Typography>
+            </Box>
+          )}
+
+          {request.additionalNotes && (
+            <Typography variant="body2" className="mb-2 text-gray-600 dark:text-gray-300">
+              <strong>Notes:</strong> {request.additionalNotes}
+            </Typography>
+          )}
+        </Box>
+
+        <Box className="flex justify-between items-center">
           <Chip
             label={`NZD $${request.offeredAmount}`}
             color="success"
@@ -257,35 +286,6 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
             className="font-semibold"
           />
         </Box>
-
-        <Typography variant="body2" className="mb-2 text-gray-600 dark:text-gray-300">
-          <strong>Date:</strong> {new Date(request.flightDate).toLocaleDateString()}
-        </Typography>
-
-        {request.travelerName && (
-          <Typography variant="body2" className="mb-2 text-gray-600 dark:text-gray-300">
-            <PersonIcon className="inline w-4 h-4 mr-1" />
-            <strong>Traveler:</strong> {request.travelerName}
-          </Typography>
-        )}
-
-        {request.specialNeeds && (
-          <Box className="mb-2">
-            <Typography variant="body2" className="text-gray-600 dark:text-gray-300">
-              <HelpIcon className="inline w-4 h-4 mr-1" />
-              <strong>Help Needed:</strong>
-            </Typography>
-            <Typography variant="body2" className="ml-5 text-gray-700 dark:text-gray-200">
-              {request.specialNeeds}
-            </Typography>
-          </Box>
-        )}
-
-        {request.additionalNotes && (
-          <Typography variant="body2" className="mb-2 text-gray-600 dark:text-gray-300">
-            <strong>Notes:</strong> {request.additionalNotes}
-          </Typography>
-        )}
       </CardContent>
 
       <CardActions className="justify-between bg-gray-50 dark:bg-gray-800">
@@ -308,28 +308,20 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
     </Card>
   );
 
-  const renderOfferCard = (offer: FlightCompanionOffer) => (
-    <Card
-      key={offer.id}
-      className="hover:shadow-lg transition-shadow duration-300"
-      sx={{ mb: 2 }}
-    >
+  const renderOfferCard = (offer: FlightCompanionOffer): JSX.Element => (
+    <Card key={offer.id} className="h-full hover:shadow-lg transition-shadow duration-200">
       <CardContent>
         <Box className="flex justify-between items-start mb-3">
-          <Box>
-            <Typography variant="h6" className="flex items-center gap-2 text-gray-800 dark:text-white">
-              <PersonIcon color="primary" />
+          <Box className="flex items-center space-x-2">
+            <FlightIcon className="text-green-600" />
+            <Typography variant="h6" className="font-semibold text-gray-900 dark:text-gray-100">
               {offer.flightNumber} - {offer.airline}
-            </Typography>
-            <Typography variant="body2" color="primary" className="font-medium">
-              {offer.departureAirport} → {offer.arrivalAirport}
             </Typography>
           </Box>
           <Chip
-            label={`NZD $${offer.requestedAmount}`}
-            color="primary"
-            variant="filled"
-            className="font-semibold"
+            label={`${offer.departureAirport} → ${offer.arrivalAirport}`}
+            size="small"
+            className="bg-green-100 text-green-800"
           />
         </Box>
 
@@ -364,187 +356,62 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
           className="bg-green-600 hover:bg-green-700"
           onClick={() => handleContactHelper(offer)}
         >
-          Contact Helper
+          Contact
         </Button>
       </CardActions>
     </Card>
   );
 
-  const renderCreateForm = () => (
-    <Dialog
-      open={showCreateForm}
-      onClose={() => setShowCreateForm(false)}
-      maxWidth="md"
-      fullWidth
-    >
-      <form onSubmit={handleFormSubmit}>
-        <DialogTitle>Request Flight Companion Help</DialogTitle>
-        <DialogContent className="space-y-4">
-          <Grid container spacing={2} className="mt-2">
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="flightNumber"
-                label="Flight Number"
-                value={formData.flightNumber}
-                onChange={handleInputChange}
-                fullWidth
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="airline"
-                label="Airline"
-                value={formData.airline}
-                onChange={handleInputChange}
-                fullWidth
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                name="flightDate"
-                label="Flight Date"
-                type="datetime-local"
-                value={formData.flightDate}
-                onChange={handleInputChange}
-                fullWidth
-                required
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>From Airport</InputLabel>
-                <Select
-                  name="departureAirport"
-                  value={formData.departureAirport}
-                  onChange={handleSelectChange}
-                  label="From Airport"
-                >
-                  {airportOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>To Airport</InputLabel>
-                <Select
-                  name="arrivalAirport"
-                  value={formData.arrivalAirport}
-                  onChange={handleSelectChange}
-                  label="To Airport"
-                >
-                  {airportOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="travelerName"
-                label="Traveler Name"
-                value={formData.travelerName}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Traveler Age</InputLabel>
-                <Select
-                  name="travelerAge"
-                  value={formData.travelerAge}
-                  onChange={handleSelectChange}
-                  label="Traveler Age"
-                >
-                  {travelerAgeOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                name="specialNeeds"
-                label="Special Needs or Help Required"
-                value={formData.specialNeeds}
-                onChange={handleInputChange}
-                fullWidth
-                multiline
-                rows={3}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="offeredAmount"
-                label="Offered Amount (NZD)"
-                type="number"
-                value={formData.offeredAmount}
-                onChange={handleInputChange}
-                fullWidth
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                name="additionalNotes"
-                label="Additional Notes"
-                value={formData.additionalNotes}
-                onChange={handleInputChange}
-                fullWidth
-                multiline
-                rows={2}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowCreateForm(false)}>Cancel</Button>
+  // Early return for error state
+  if (error) {
+    return (
+      <Container maxWidth="lg" className="py-8">
+        <Paper className="p-6 text-center">
+          <Typography variant="h6" color="error" className="mb-4">
+            Error loading data
+          </Typography>
+          <Typography variant="body2" className="mb-4">
+            {error.toString()}
+          </Typography>
           <Button 
-            type="submit" 
-            variant="contained"
+            variant="contained" 
+            onClick={() => {
+              refetchRequests();
+              refetchOffers();
+            }}
           >
-            Create Request
+            Retry
           </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
-  );
+        </Paper>
+      </Container>
+    );
+  }
 
-  // Main Render
   return (
     <Container maxWidth="lg" className="py-8">
       {/* Header */}
-      <Box className="text-center mb-8">
-        <Typography variant="h3" component="h1" className="font-bold text-gray-900 dark:text-white mb-4">
-          Flight Companion Service
-        </Typography>
-        <Typography variant="body1" className="text-gray-600 dark:text-gray-300">
-          Connect with fellow travelers to help each other during flights
-        </Typography>
-      </Box>
+      <Paper elevation={0} className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900 dark:to-purple-900">
+        <Box className="text-center">
+          <Typography variant="h3" component="h1" className="font-bold text-gray-900 dark:text-gray-100 mb-2">
+            Flight Companion Service
+          </Typography>
+          <Typography variant="body1" className="text-gray-600 dark:text-gray-300">
+            Connect with helpful travelers on your flight route
+          </Typography>
+        </Box>
+      </Paper>
 
-      {/* Tabs */}
-      <Paper className="mb-6" elevation={1}>
-        <Tabs
-          value={activeTab}
+      {/* Navigation Tabs */}
+      <Paper elevation={1} className="mb-6">
+        <Tabs 
+          value={activeTab} 
           onChange={handleTabChange}
-          variant="fullWidth"
-          indicatorColor="primary"
+          className="border-b border-gray-200"
           textColor="primary"
-          className="border-b border-gray-200 dark:border-gray-700"
+          indicatorColor="primary"
         >
           <Tab
+            icon={<HelpIcon />}
             label={`Help Requests (${requests.length})`}
             className="font-medium"
           />
@@ -615,7 +482,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
               <Box>
                 {offers.length === 0 ? (
                   <Paper className="text-center py-12 bg-gray-50 dark:bg-gray-800">
-                    <PersonIcon
+                    <FlightIcon
                       sx={{ fontSize: 64 }}
                       className="text-gray-400 mb-4"
                     />
@@ -647,21 +514,185 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
         )}
       </Box>
 
-      {/* Create Form Dialog */}
-      {renderCreateForm()}
+      {/* Create Request Dialog */}
+      <Dialog
+        open={showCreateForm}
+        onClose={() => setShowCreateForm(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle className="bg-gray-50 dark:bg-gray-800 border-b">
+          <Typography variant="h6" className="font-semibold">
+            Request Flight Companion Help
+          </Typography>
+        </DialogTitle>
 
-      {/* Snackbar */}
+        <DialogContent className="p-6">
+          <form onSubmit={handleFormSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="flightNumber"
+                  label="Flight Number"
+                  value={formData.flightNumber}
+                  onChange={handleInputChange}
+                  fullWidth
+                  required
+                  placeholder="e.g., NZ289"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="airline"
+                  label="Airline"
+                  value={formData.airline}
+                  onChange={handleInputChange}
+                  fullWidth
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  name="flightDate"
+                  label="Flight Date"
+                  type="datetime-local"
+                  value={formData.flightDate}
+                  onChange={handleInputChange}
+                  fullWidth
+                  required
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>From Airport</InputLabel>
+                  <Select
+                    name="departureAirport"
+                    value={formData.departureAirport}
+                    onChange={handleSelectChange}
+                    label="From Airport"
+                  >
+                    {airportOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>To Airport</InputLabel>
+                  <Select
+                    name="arrivalAirport"
+                    value={formData.arrivalAirport}
+                    onChange={handleSelectChange}
+                    label="To Airport"
+                  >
+                    {airportOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="travelerName"
+                  label="Traveler Name (Optional)"
+                  value={formData.travelerName}
+                  onChange={handleInputChange}
+                  fullWidth
+                  placeholder="e.g., My elderly mother"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Traveler Age Group</InputLabel>
+                  <Select
+                    name="travelerAge"
+                    value={formData.travelerAge}
+                    onChange={handleSelectChange}
+                    label="Traveler Age Group"
+                  >
+                    {travelerAgeOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  name="specialNeeds"
+                  label="Special Assistance Needed"
+                  value={formData.specialNeeds}
+                  onChange={handleInputChange}
+                  fullWidth
+                  multiline
+                  rows={3}
+                  placeholder="e.g., Language translation, wheelchair assistance, medication reminders..."
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="offeredAmount"
+                  label="Offered Amount (NZD)"
+                  type="number"
+                  value={formData.offeredAmount}
+                  onChange={handleInputChange}
+                  fullWidth
+                  inputProps={{ min: 0, max: 500 }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  name="additionalNotes"
+                  label="Additional Notes"
+                  value={formData.additionalNotes}
+                  onChange={handleInputChange}
+                  fullWidth
+                  multiline
+                  rows={2}
+                  placeholder="Any other important information..."
+                />
+              </Grid>
+            </Grid>
+          </form>
+        </DialogContent>
+
+        <DialogActions className="p-6 pt-0">
+          <Button 
+            onClick={() => setShowCreateForm(false)}
+            className="text-gray-600"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={(event: any) => handleFormSubmit(event)}
+            variant="contained"
+            disabled={createRequestLoading}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            {createRequestLoading && <CircularProgress size={20} className="mr-2" />}
+            Create Request
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        onClose={closeSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert
-          onClose={handleSnackbarClose}
+        <Alert 
+          onClose={closeSnackbar} 
           severity={snackbar.severity}
           variant="filled"
-          className="w-full"
         >
           {snackbar.message}
         </Alert>

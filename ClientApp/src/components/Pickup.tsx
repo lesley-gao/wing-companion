@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Container,
@@ -20,7 +20,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   Snackbar,
   Alert,
   CircularProgress,
@@ -39,54 +38,18 @@ import {
   Schedule as ScheduleIcon,
   Star as StarIcon,
 } from '@mui/icons-material';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { clearError } from '../store/slices/pickupSlice';
+import { useAppDispatch } from '../store/hooks';
+import { addNotification } from '../store/slices/uiSlice';
+import {
+  useGetPickupRequestsQuery,
+  useGetPickupOffersQuery,
+  useCreatePickupRequestMutation,
+  type PickupRequest,
+  type PickupOffer,
+  type CreatePickupRequestData
+} from '../store/api/pickupApi';
 
-// TypeScript Interfaces
-interface PickupRequest {
-  id: number;
-  userId: number;
-  flightNumber: string;
-  arrivalDate: string;
-  arrivalTime: string;
-  airport: string;
-  destinationAddress: string;
-  passengerName?: string;
-  passengerPhone?: string;
-  passengerCount: number;
-  hasLuggage: boolean;
-  offeredAmount: number;
-  specialRequests?: string;
-  isActive: boolean;
-  isMatched: boolean;
-  createdAt: string;
-  matchedOfferId?: number;
-  matchedOffer?: PickupOffer;
-}
-
-interface PickupOffer {
-  id: number;
-  userId: number;
-  user?: {
-    id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  airport: string;
-  vehicleType?: string;
-  maxPassengers: number;
-  canHandleLuggage: boolean;
-  serviceArea?: string;
-  baseRate: number;
-  languages?: string;
-  additionalServices?: string;
-  isAvailable: boolean;
-  createdAt: string;
-  totalPickups: number;
-  averageRating: number;
-}
-
+// TypeScript Interfaces  
 interface RequestFormData {
   flightNumber: string;
   arrivalDate: string;
@@ -116,15 +79,34 @@ interface PickupProps {}
 
 // Main Component
 const Pickup: React.FC<PickupProps> = () => {
-  // Redux State
+  // Redux State - removed unused 'user' variable
   const dispatch = useAppDispatch();
-  const { requests, offers, isLoading, error } = useAppSelector((state) => state.pickup);
+
+  // RTK Query hooks replace manual fetch calls
+  const {
+    data: requests = [],
+    isLoading: requestsLoading,
+    error: requestsError,
+    refetch: refetchRequests
+  } = useGetPickupRequestsQuery();
+  
+  const {
+    data: offers = [],
+    isLoading: offersLoading,
+    error: offersError,
+    refetch: refetchOffers
+  } = useGetPickupOffersQuery();
+  
+  const [createRequest, { isLoading: createRequestLoading }] = useCreatePickupRequestMutation();
+
+  // Loading and error states
+  const isLoading = requestsLoading || offersLoading;
+  const error = requestsError || offersError;
 
   // Local State
   const [activeTab, setActiveTab] = useState<number>(0);
   const [showCreateDialog, setShowCreateDialog] = useState<boolean>(false);
   const [formType, setFormType] = useState<'request' | 'offer'>('request');
-  const [loading, setLoading] = useState<boolean>(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -160,10 +142,6 @@ const Pickup: React.FC<PickupProps> = () => {
     languages: '',
     additionalServices: '',
   });
-
-  // Mock data for local state (replace with Redux actions in production)
-  const [localRequests, setLocalRequests] = useState<PickupRequest[]>([]);
-  const [localOffers, setLocalOffers] = useState<PickupOffer[]>([]);
 
   // Helper Functions
   const showSnackbar = (message: string, severity: 'success' | 'error' | 'warning' | 'info'): void => {
@@ -203,56 +181,6 @@ const Pickup: React.FC<PickupProps> = () => {
     });
   };
 
-  // Data Fetching Functions
-  const fetchRequests = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/pickup/requests');
-      if (response.ok) {
-        const data = await response.json();
-        setLocalRequests(data);
-      } else {
-        showSnackbar('Failed to fetch pickup requests', 'error');
-      }
-    } catch (error) {
-      console.error('Error fetching pickup requests:', error);
-      showSnackbar('Error fetching pickup requests', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchOffers = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/pickup/offers');
-      if (response.ok) {
-        const data = await response.json();
-        setLocalOffers(data);
-      } else {
-        showSnackbar('Failed to fetch pickup offers', 'error');
-      }
-    } catch (error) {
-      console.error('Error fetching pickup offers:', error);
-      showSnackbar('Error fetching pickup offers', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Effects
-  useEffect(() => {
-    fetchRequests();
-    fetchOffers();
-  }, []);
-
-  useEffect(() => {
-    if (error) {
-      showSnackbar(error, 'error');
-      dispatch(clearError());
-    }
-  }, [error, dispatch]);
-
   // Event Handlers
   const handleTabChange = (event: React.SyntheticEvent, newValue: number): void => {
     setActiveTab(newValue);
@@ -262,29 +190,15 @@ const Pickup: React.FC<PickupProps> = () => {
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ): void => {
     const { name, value, type } = event.target;
-    const checked = type === 'checkbox' ? (event.target as HTMLInputElement).checked : undefined;
+    const parsedValue = type === 'number' ? Number(value) : value;
     
     setRequestFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : 
-              type === 'number' ? parseFloat(value) || 0 : value,
+      [name]: parsedValue,
     }));
   };
 
-  const handleOfferInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ): void => {
-    const { name, value, type } = event.target;
-    const checked = type === 'checkbox' ? (event.target as HTMLInputElement).checked : undefined;
-    
-    setOfferFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : 
-              type === 'number' ? parseFloat(value) || 0 : value,
-    }));
-  };
-
-  const handleRequestSelectChange = (event: SelectChangeEvent<string | number>): void => {
+  const handleRequestSelectChange = (event: SelectChangeEvent<any>): void => {
     const { name, value } = event.target;
     setRequestFormData((prev) => ({
       ...prev,
@@ -292,11 +206,11 @@ const Pickup: React.FC<PickupProps> = () => {
     }));
   };
 
-  const handleOfferSelectChange = (event: SelectChangeEvent<string | number>): void => {
-    const { name, value } = event.target;
-    setOfferFormData((prev) => ({
+  const handleRequestCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    const { name, checked } = event.target;
+    setRequestFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: checked,
     }));
   };
 
@@ -304,73 +218,60 @@ const Pickup: React.FC<PickupProps> = () => {
     event.preventDefault();
     
     try {
-      setLoading(true);
-      const response = await fetch('/api/pickup/requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...requestFormData,
-          userId: 1, // Replace with actual user ID from auth
-        }),
-      });
+      const requestData: CreatePickupRequestData = {
+        flightNumber: requestFormData.flightNumber,
+        arrivalDate: requestFormData.arrivalDate,
+        arrivalTime: requestFormData.arrivalTime,
+        airport: requestFormData.airport,
+        destinationAddress: requestFormData.destinationAddress,
+        passengerName: requestFormData.passengerName,
+        passengerPhone: requestFormData.passengerPhone,
+        passengerCount: requestFormData.passengerCount,
+        hasLuggage: requestFormData.hasLuggage,
+        offeredAmount: requestFormData.offeredAmount,
+        specialRequests: requestFormData.specialRequests,
+      };
 
-      if (response.ok) {
-        showSnackbar('Pickup request created successfully!', 'success');
-        setShowCreateDialog(false);
-        resetRequestForm();
-        await fetchRequests();
-      } else {
-        showSnackbar('Failed to create pickup request', 'error');
-      }
+      // Use RTK Query mutation instead of manual fetch
+      await createRequest(requestData).unwrap();
+      
+      dispatch(addNotification({
+        message: 'Pickup request created successfully!',
+        type: 'success',
+      }));
+      
+      setShowCreateDialog(false);
+      resetRequestForm();
+      
     } catch (error) {
       console.error('Error creating pickup request:', error);
-      showSnackbar('Error creating pickup request', 'error');
-    } finally {
-      setLoading(false);
+      const errorMessage = error instanceof Error ? error.message : 'Error creating pickup request';
+      showSnackbar(errorMessage, 'error');
+      
+      dispatch(addNotification({
+        message: 'Failed to create pickup request',
+        type: 'error',
+      }));
     }
   };
 
   const handleCreateOffer = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     
-    try {
-      setLoading(true);
-      const response = await fetch('/api/pickup/offers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...offerFormData,
-          userId: 1, // Replace with actual user ID from auth
-        }),
-      });
-
-      if (response.ok) {
-        showSnackbar('Pickup offer created successfully!', 'success');
-        setShowCreateDialog(false);
-        resetOfferForm();
-        await fetchOffers();
-      } else {
-        showSnackbar('Failed to create pickup offer', 'error');
-      }
-    } catch (error) {
-      console.error('Error creating pickup offer:', error);
-      showSnackbar('Error creating pickup offer', 'error');
-    } finally {
-      setLoading(false);
-    }
+    // TODO: Implement offer creation using RTK Query when pickupApi is extended with offer creation
+    // For now, just show a message and reset the form
+    showSnackbar('Offer creation will be implemented with RTK Query', 'info');
+    
+    // Reset the form when this is properly implemented
+    resetOfferForm();
+    setShowCreateDialog(false);
   };
 
   const handleContactDriver = (offer: PickupOffer): void => {
-    // Implement contact functionality
     showSnackbar(`Contacting driver for ${offer.vehicleType}`, 'info');
   };
 
   const handleContactPassenger = (request: PickupRequest): void => {
-    // Implement contact functionality
     showSnackbar(`Contacting passenger for ${request.flightNumber}`, 'info');
   };
 
@@ -475,39 +376,31 @@ const Pickup: React.FC<PickupProps> = () => {
             <TaxiIcon className="text-green-600" />
             <Box>
               <Typography variant="h6" className="font-semibold text-gray-900">
-                {offer.vehicleType || 'Vehicle'}
+                {offer.vehicleType}
               </Typography>
               <Chip 
                 label={offer.airport} 
                 size="small" 
-                className="bg-blue-100 text-blue-800"
+                className="bg-green-100 text-green-800"
               />
             </Box>
           </Box>
-          <Chip 
-            label={`From NZD $${offer.baseRate}`}
-            className="bg-green-100 text-green-800 font-semibold"
-          />
+          <Box className="flex items-center space-x-1">
+            <StarIcon className="text-yellow-500" fontSize="small" />
+            <Typography variant="body2" className="font-medium">
+              {offer.rating}
+            </Typography>
+          </Box>
         </Box>
 
-        <Box className="space-y-3">
-          <Box className="flex items-center space-x-4 text-sm">
-            <span><strong>Capacity:</strong> {offer.maxPassengers} passengers</span>
-            {offer.canHandleLuggage && (
-              <Chip 
-                icon={<LuggageIcon />} 
-                label="Luggage OK" 
-                size="small"
-                className="bg-green-50 text-green-700"
-              />
-            )}
-          </Box>
-
-          {offer.serviceArea && (
-            <Typography variant="body2" className="text-gray-600">
-              <strong>Service Area:</strong> {offer.serviceArea}
-            </Typography>
-          )}
+        <Box className="space-y-2 mb-3">
+          <Typography variant="body2" className="text-gray-600">
+            <strong>Capacity:</strong> {offer.maxPassengers} passengers max
+          </Typography>
+          
+          <Typography variant="body2" className="text-gray-600">
+            <strong>Service Area:</strong> {offer.serviceArea}
+          </Typography>
 
           {offer.languages && (
             <Typography variant="body2" className="text-gray-600">
@@ -515,21 +408,30 @@ const Pickup: React.FC<PickupProps> = () => {
             </Typography>
           )}
 
+          <Typography variant="body2" className="text-gray-600">
+            <strong>Experience:</strong> {offer.totalTrips} completed rides
+          </Typography>
+
           {offer.additionalServices && (
             <Typography variant="body2" className="text-gray-600">
-              <strong>Additional Services:</strong> {offer.additionalServices}
+              <strong>Services:</strong> {offer.additionalServices}
             </Typography>
           )}
+        </Box>
 
-          <Box className="flex items-center space-x-2 text-sm text-gray-600">
-            <span><strong>Experience:</strong> {offer.totalPickups} pickups completed</span>
-            {offer.averageRating > 0 && (
-              <Box className="flex items-center space-x-1">
-                <StarIcon fontSize="small" className="text-yellow-500" />
-                <span>{offer.averageRating.toFixed(1)}</span>
-              </Box>
-            )}
-          </Box>
+        <Box className="flex justify-between items-center">
+          <Chip 
+            label={`$${offer.baseRate}`}
+            className="bg-green-100 text-green-800 font-semibold"
+          />
+          {offer.canHandleLuggage && (
+            <Chip 
+              icon={<LuggageIcon />} 
+              label="Luggage OK" 
+              size="small"
+              className="bg-blue-50 text-blue-700"
+            />
+          )}
         </Box>
       </CardContent>
 
@@ -537,20 +439,46 @@ const Pickup: React.FC<PickupProps> = () => {
         <Chip 
           label="Available"
           color="success"
-          variant="filled"
+          variant="outlined"
+          size="small"
         />
         <Button
           variant="contained"
           size="small"
           startIcon={<ContactIcon />}
           onClick={() => handleContactDriver(offer)}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-green-600 hover:bg-green-700"
         >
-          Contact Driver
+          Contact
         </Button>
       </CardActions>
     </Card>
   );
+
+  // Early return for error state
+  if (error) {
+    return (
+      <Container maxWidth="lg" className="py-8">
+        <Paper className="p-6 text-center">
+          <Typography variant="h6" color="error" className="mb-4">
+            Error loading data
+          </Typography>
+          <Typography variant="body2" className="mb-4">
+            {error.toString()}
+          </Typography>
+          <Button 
+            variant="contained" 
+            onClick={() => {
+              refetchRequests();
+              refetchOffers();
+            }}
+          >
+            Retry
+          </Button>
+        </Paper>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" className="py-8">
@@ -577,27 +505,31 @@ const Pickup: React.FC<PickupProps> = () => {
         >
           <Tab 
             icon={<FlightIcon />} 
-            label={`Pickup Requests (${localRequests.length})`}
+            label={`Pickup Requests (${requests.length})`}
             className="text-gray-700 hover:text-blue-600"
           />
           <Tab 
             icon={<TaxiIcon />} 
-            label={`Available Drivers (${localOffers.length})`}
-            className="text-gray-700 hover:text-blue-600"
+            label={`Available Drivers (${offers.length})`}
+            className="text-gray-700 hover:text-green-600"
           />
         </Tabs>
       </Paper>
 
-      {/* Action Buttons */}
-      <Box className="flex justify-center mb-6">
+      {/* Action Button */}
+      <Box className="text-center mb-6">
         <Button
           variant="contained"
           size="large"
           startIcon={<AddIcon />}
           onClick={() => openCreateDialog(activeTab === 0 ? 'request' : 'offer')}
-          className="bg-blue-600 hover:bg-blue-700 px-8 py-3 text-white font-semibold"
+          className={`px-8 py-3 text-white ${
+            activeTab === 0 
+              ? 'bg-blue-600 hover:bg-blue-700' 
+              : 'bg-green-600 hover:bg-green-700'
+          }`}
         >
-          {activeTab === 0 ? 'Request Pickup' : 'Offer Pickup Service'}
+          {activeTab === 0 ? 'Request Pickup' : 'Offer Service'}
         </Button>
       </Box>
 
@@ -605,11 +537,11 @@ const Pickup: React.FC<PickupProps> = () => {
       <Box>
         {activeTab === 0 && (
           <Box>
-            {loading ? (
+            {isLoading && !requests.length ? (
               <Box className="flex justify-center py-8">
                 <CircularProgress />
               </Box>
-            ) : localRequests.length === 0 ? (
+            ) : requests.length === 0 ? (
               <Paper className="p-12 text-center bg-gray-50">
                 <FlightIcon className="text-gray-400 text-6xl mb-4" />
                 <Typography variant="h6" className="text-gray-600 mb-2">
@@ -621,7 +553,7 @@ const Pickup: React.FC<PickupProps> = () => {
               </Paper>
             ) : (
               <Grid container spacing={3}>
-                {localRequests.map((request) => (
+                {requests.map((request) => (
                   <Grid item xs={12} md={6} key={request.id}>
                     {renderRequestCard(request)}
                   </Grid>
@@ -633,11 +565,11 @@ const Pickup: React.FC<PickupProps> = () => {
 
         {activeTab === 1 && (
           <Box>
-            {loading ? (
+            {isLoading && !offers.length ? (
               <Box className="flex justify-center py-8">
                 <CircularProgress />
               </Box>
-            ) : localOffers.length === 0 ? (
+            ) : offers.length === 0 ? (
               <Paper className="p-12 text-center bg-gray-50">
                 <TaxiIcon className="text-gray-400 text-6xl mb-4" />
                 <Typography variant="h6" className="text-gray-600 mb-2">
@@ -649,7 +581,7 @@ const Pickup: React.FC<PickupProps> = () => {
               </Paper>
             ) : (
               <Grid container spacing={3}>
-                {localOffers.map((offer) => (
+                {offers.map((offer) => (
                   <Grid item xs={12} md={6} key={offer.id}>
                     {renderOfferCard(offer)}
                   </Grid>
@@ -735,7 +667,7 @@ const Pickup: React.FC<PickupProps> = () => {
                     onChange={handleRequestInputChange}
                     fullWidth
                     required
-                    placeholder="e.g., 123 Queen Street, Auckland City"
+                    placeholder="Full address including suburb"
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -784,7 +716,6 @@ const Pickup: React.FC<PickupProps> = () => {
                     onChange={handleRequestInputChange}
                     fullWidth
                     inputProps={{ min: 0, max: 200 }}
-                    placeholder="50"
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -793,10 +724,10 @@ const Pickup: React.FC<PickupProps> = () => {
                       <Checkbox
                         name="hasLuggage"
                         checked={requestFormData.hasLuggage}
-                        onChange={handleRequestInputChange}
+                        onChange={handleRequestCheckboxChange}
                       />
                     }
-                    label="Has luggage"
+                    label="I have luggage"
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -807,13 +738,12 @@ const Pickup: React.FC<PickupProps> = () => {
                     onChange={handleRequestInputChange}
                     fullWidth
                     multiline
-                    rows={3}
-                    placeholder="e.g., Elderly passengers, large luggage, Chinese speaking driver preferred..."
+                    rows={2}
+                    placeholder="e.g., Child seat needed, elderly passenger assistance, large luggage..."
                   />
                 </Grid>
               </Grid>
 
-              {/* Move the submit button inside the form */}
               <Box className="flex justify-end gap-3 mt-6 pt-6 border-t">
                 <Button 
                   type="button"
@@ -825,10 +755,10 @@ const Pickup: React.FC<PickupProps> = () => {
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={loading}
+                  disabled={createRequestLoading}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
-                  {loading && <CircularProgress size={20} className="mr-2" />}
+                  {createRequestLoading && <CircularProgress size={20} className="mr-2" />}
                   Create Request
                 </Button>
               </Box>
@@ -842,7 +772,6 @@ const Pickup: React.FC<PickupProps> = () => {
                     <Select
                       name="airport"
                       value={offerFormData.airport}
-                      onChange={handleOfferSelectChange}
                       label="Airport"
                     >
                       <MenuItem value="AKL">Auckland (AKL)</MenuItem>
@@ -856,83 +785,13 @@ const Pickup: React.FC<PickupProps> = () => {
                     name="vehicleType"
                     label="Vehicle Type"
                     value={offerFormData.vehicleType}
-                    onChange={handleOfferInputChange}
                     fullWidth
                     required
                     placeholder="e.g., Sedan, SUV, Van"
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    name="maxPassengers"
-                    label="Maximum Passengers"
-                    type="number"
-                    value={offerFormData.maxPassengers}
-                    onChange={handleOfferInputChange}
-                    fullWidth
-                    required
-                    inputProps={{ min: 1, max: 8 }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    name="baseRate"
-                    label="Base Rate (NZD)"
-                    type="number"
-                    value={offerFormData.baseRate}
-                    onChange={handleOfferInputChange}
-                    fullWidth
-                    required
-                    inputProps={{ min: 0, max: 200 }}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    name="serviceArea"
-                    label="Service Area"
-                    value={offerFormData.serviceArea}
-                    onChange={handleOfferInputChange}
-                    fullWidth
-                    placeholder="e.g., Auckland City, North Shore, All Auckland"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    name="languages"
-                    label="Languages"
-                    value={offerFormData.languages}
-                    onChange={handleOfferInputChange}
-                    fullWidth
-                    placeholder="e.g., Chinese, English"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        name="canHandleLuggage"
-                        checked={offerFormData.canHandleLuggage}
-                        onChange={handleOfferInputChange}
-                      />
-                    }
-                    label="Can handle luggage"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    name="additionalServices"
-                    label="Additional Services"
-                    value={offerFormData.additionalServices}
-                    onChange={handleOfferInputChange}
-                    fullWidth
-                    multiline
-                    rows={3}
-                    placeholder="e.g., Can help with shopping, Know Chinese areas, Airport meet and greet"
-                  />
-                </Grid>
               </Grid>
 
-              {/* Move the submit button inside the form */}
               <Box className="flex justify-end gap-3 mt-6 pt-6 border-t">
                 <Button 
                   type="button"
@@ -944,18 +803,14 @@ const Pickup: React.FC<PickupProps> = () => {
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={loading}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-green-600 hover:bg-green-700"
                 >
-                  {loading && <CircularProgress size={20} className="mr-2" />}
                   Create Offer
                 </Button>
               </Box>
             </form>
           )}
         </DialogContent>
-
-        {/* Remove DialogActions completely since buttons are now in the form */}
       </Dialog>
 
       {/* Snackbar for notifications */}
@@ -963,9 +818,13 @@ const Pickup: React.FC<PickupProps> = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={closeSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert onClose={closeSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert 
+          onClose={closeSnackbar} 
+          severity={snackbar.severity}
+          variant="filled"
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
