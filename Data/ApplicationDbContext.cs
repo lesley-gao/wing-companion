@@ -18,6 +18,7 @@ namespace NetworkingApp.Data
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Rating> Ratings { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Message> Messages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -127,6 +128,25 @@ namespace NetworkingApp.Data
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Configure Message relationships
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany(u => u.SentMessages)
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Receiver)
+                .WithMany(u => u.ReceivedMessages)
+                .HasForeignKey(m => m.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.ParentMessage)
+                .WithMany(m => m.Replies)
+                .HasForeignKey(m => m.ParentMessageId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Configure indexes for performance
             modelBuilder.Entity<FlightCompanionRequest>()
                 .HasIndex(fcr => new { fcr.FlightNumber, fcr.FlightDate })
@@ -151,6 +171,18 @@ namespace NetworkingApp.Data
             modelBuilder.Entity<Notification>()
                 .HasIndex(n => new { n.UserId, n.IsRead })
                 .HasDatabaseName("IX_Notification_User_Read");
+
+            modelBuilder.Entity<Message>()
+                .HasIndex(m => new { m.ThreadId, m.CreatedAt })
+                .HasDatabaseName("IX_Message_Thread_Created");
+
+            modelBuilder.Entity<Message>()
+                .HasIndex(m => new { m.ReceiverId, m.IsRead })
+                .HasDatabaseName("IX_Message_Receiver_Read");
+
+            modelBuilder.Entity<Message>()
+                .HasIndex(m => new { m.SenderId, m.CreatedAt })
+                .HasDatabaseName("IX_Message_Sender_Created");
         }
     }
 }

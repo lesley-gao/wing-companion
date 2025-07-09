@@ -9,16 +9,21 @@ import { NotificationSystem } from './components/ui/NotificationSystem';
 import { LoadingOverlay } from './components/ui/Loading';
 import { Layout } from './components/Layout';
 import { useAppSelector } from './store/hooks';
+import { useSignalR } from './hooks/useSignalR';
 
 // Pages
 import FlightCompanion from './components/FlightCompanion';
 import Pickup from './components/Pickup';
 import UserProfile from './components/UserProfile';
 import { FetchData } from './components/FetchData';
+import SignalRTest from './components/SignalRTest';
 
 // App Content Component (needs access to Redux state)
 const AppContent: React.FC = () => {
   const isLoading = useAppSelector((state) => state.ui.isLoading);
+
+  // Initialize SignalR
+  useSignalR();
 
   return (
     <ErrorBoundary
@@ -36,6 +41,7 @@ const AppContent: React.FC = () => {
           <Route path="/pickup" element={<Pickup />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/fetch-data" element={<FetchData />} />
+          <Route path="/signalr-test" element={<SignalRTest />} />
         </Routes>
       </Layout>
 

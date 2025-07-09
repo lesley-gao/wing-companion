@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations; 
 using Microsoft.Extensions.Logging;
+using NetworkingApp.Services;
 
 namespace NetworkingApp.Controllers
 {
@@ -17,11 +18,16 @@ namespace NetworkingApp.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PickupController> _logger;
+        private readonly INotificationService _notificationService;
 
-        public PickupController(ApplicationDbContext context, ILogger<PickupController> logger)
+        public PickupController(
+            ApplicationDbContext context, 
+            ILogger<PickupController> logger,
+            INotificationService notificationService)
         {
             _context = context;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         // GET: api/Pickup/requests
@@ -265,12 +271,23 @@ namespace NetworkingApp.Controllers
 
             // Update match status
             request.IsMatched = true;
-            request.MatchedOfferId = offer.Id;
-            offer.TotalPickups++;
+            request.MatchedOfferId = matchRequest.OfferId;
+
+            offer.IsAvailable = false;
 
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            // Send notifications to both users
+            await _notificationService.SendMatchFoundNotificationAsync(
+                request.UserId, "PickupRequest", request.Id, offer.UserId);
+            
+            await _notificationService.SendServiceNotificationAsync(
+                offer.UserId, "ServiceConfirmed", 
+                $"You have been matched to provide pickup service for {request.PassengerName}. " +
+                $"Flight: {request.FlightNumber} arriving at {request.ArrivalTime}.",
+                $"/pickup/service/{request.Id}");
+
+            return Ok(new { Message = "Match created successfully" });
         }
 
         // GET: api/Pickup/requests/airport/{airport}

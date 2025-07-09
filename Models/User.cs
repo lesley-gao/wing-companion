@@ -49,5 +49,7 @@ namespace NetworkingApp.Models
         public virtual ICollection<Rating> RatingsGiven { get; set; } = new List<Rating>();
         public virtual ICollection<Rating> RatingsReceived { get; set; } = new List<Rating>();
         public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+        public virtual ICollection<Message> SentMessages { get; set; } = new List<Message>();
+        public virtual ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
     }
 }

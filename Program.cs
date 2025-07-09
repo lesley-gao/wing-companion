@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using NetworkingApp.Models;
 using NetworkingApp.Data.SeedData;
+using NetworkingApp.Services;
+using NetworkingApp.Hubs; // Add this using statement
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +55,15 @@ builder.Services.AddControllers(options =>
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 
+// Add SignalR services
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+});
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
@@ -61,7 +72,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowCredentials(); // Required for SignalR
     });
 });
 
@@ -71,6 +82,10 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 }
+
+// Register business services
+builder.Services.AddScoped<IMatchingService, MatchingService>();
+builder.Services.AddScoped<INotificationService, NotificationService>(); // Register NotificationService
 
 var app = builder.Build();
 
@@ -93,6 +108,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<NotificationHub>("/notificationHub");
 
 // Serve static files and configure SPA fallback
 app.UseStaticFiles();
