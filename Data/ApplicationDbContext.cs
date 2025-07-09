@@ -20,6 +20,7 @@ namespace NetworkingApp.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<UserSettings> UserSettings { get; set; }
+        public DbSet<VerificationDocument> VerificationDocuments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -196,6 +197,12 @@ namespace NetworkingApp.Data
                 .HasIndex(us => us.UserId)
                 .IsUnique()
                 .HasDatabaseName("IX_UserSettings_UserId");
+
+            modelBuilder.Entity<VerificationDocument>()
+                .HasOne(v => v.User)
+                .WithMany()
+                .HasForeignKey(v => v.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

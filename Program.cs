@@ -100,10 +100,44 @@ if (builder.Environment.IsDevelopment())
 builder.Services.AddScoped<IMatchingService, MatchingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>(); // Register NotificationService
 builder.Services.AddScoped<IRoleService, RoleService>(); // Register RoleService
+builder.Services.AddScoped<IDataProtectionService, DataProtectionService>(); // Register DataProtectionService
 
 // Configure Email Service
 builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection("EmailConfiguration"));
 builder.Services.AddScoped<IEmailService, EmailService>();
+
+// Configure JWT settings
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+// Add JWT authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<NetworkingApp.Models.JwtSettings>() ?? new NetworkingApp.Models.JwtSettings();
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings.SecretKey ?? string.Empty)),
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+// Register JWT token service
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+// Configure Data Protection for encryption of sensitive data
+builder.Services.AddDataProtection()
+    .SetApplicationName("NetworkingApp")
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "DataProtectionKeys")));
 
 var app = builder.Build();
 

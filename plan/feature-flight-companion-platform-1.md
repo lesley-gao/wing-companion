@@ -141,13 +141,23 @@ This implementation plan provides a step-by-step approach to building the Flight
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
 | TASK-049 | Install and configure ASP.NET Core Identity with User.cs extending IdentityUser | ✅ | 2025-07-10 |
-| TASK-050 | Create AuthController.cs with registration, login, logout, and password reset endpoints | | |
-| TASK-051 | Implement JWT token authentication and authorization middleware | | |
-| TASK-052 | Create user verification workflow with document upload and admin approval | | |
-| TASK-053 | Add role-based authorization (User, Helper, Admin) throughout API controllers | | |
-| TASK-054 | Implement data encryption for sensitive user information using ASP.NET Core Data Protection | | |
-| TASK-055 | Create Login.tsx and Register.tsx React components with TypeScript and form validation | | |
-| TASK-056 | Add authentication state management in Redux store with secure token handling | | |
+| TASK-050 | Create AuthController.cs with registration, login, logout, and password reset endpoints | ✅ | 2025-07-10 |
+| TASK-051 | Implement JWT token authentication and authorization middleware | ✅ | 2025-07-10 |
+| TASK-052 | Create user verification workflow with document upload and admin approval | ✅ | 2025-07-10 |
+| TASK-053 | Add role-based authorization (User, Helper, Admin) throughout API controllers | ✅ | 2025-07-10 |
+| TASK-054 | Implement data encryption for sensitive user information using ASP.NET Core Data Protection | ✅ | 2025-07-10 |
+| TASK-055 | Create Login.tsx and Register.tsx React components with TypeScript and form validation | ✅ | 2025-07-10 |
+| TASK-056 | Add authentication state management in Redux store with secure token handling | ✅ | 2025-07-10 |
+
+---
+
+#### TASK-056 Implementation Notes
+- Integrated Redux Toolkit authentication slice (`authSlice.ts`) with async thunks for login and user profile.
+- Login and Register components now dispatch Redux actions and consume authentication state (loading, error, isAuthenticated).
+- Selectors for authentication state added in `authSelectors.ts` for use throughout the app.
+- JWT token is stored in localStorage for now (for production, consider httpOnly cookies or in-memory storage for enhanced security).
+- Error and loading states are surfaced in the UI for both login and registration.
+- Documentation updated in this plan for future reference.
 
 ### Implementation Phase 8: Payment & Escrow System
 
