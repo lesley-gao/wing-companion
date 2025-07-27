@@ -28,6 +28,7 @@ import FAQ from './components/FAQ';
 import HelpCenter from './components/HelpCenter';
 import ContactUs from './components/ContactUs';
 import Homepage from './components/Homepage';
+import Messaging from './components/Messaging';
 
 // App Content Component (needs access to Redux state)
 const AppContent: React.FC = () => {
@@ -72,6 +73,7 @@ const AppContent: React.FC = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/signalr-test" element={<SignalRTest />} />
+            <Route path="/messages" element={<Messaging />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/help-center" element={<HelpCenter />} />
             <Route path="/contact" element={<ContactUs />} />

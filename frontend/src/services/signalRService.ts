@@ -1,5 +1,6 @@
 // ClientApp/src/services/signalRService.ts
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { API_CONFIG } from '../utils/api';
 
 export interface SignalRNotification {
   id: number;
@@ -33,7 +34,7 @@ class SignalRService {
 
   constructor() {
     this.connection = new HubConnectionBuilder()
-      .withUrl('https://localhost:5001/notificationHub', {
+      .withUrl(API_CONFIG.SIGNALR_HUB_URL, {
         accessTokenFactory: () => localStorage.getItem('token') || '',
         withCredentials: true,
       })

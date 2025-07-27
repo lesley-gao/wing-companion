@@ -19,7 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configure comprehensive logging early in the pipeline
 builder.Services.AddComprehensiveLogging(builder.Configuration, builder.Environment);
-builder.Services.AddStructuredLoggingServices();
+// builder.Services.AddStructuredLoggingServices(); // DISABLED FOR NOW
 
 // Stripe configuration - DISABLED FOR CURRENT SPRINT
 // builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
@@ -37,20 +37,31 @@ catch (Exception ex)
 }
 
 // Add services to the container.
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Configure Application Insights
-builder.Services.AddApplicationInsightsTelemetry(options =>
+// Add services to the container.
+if (builder.Environment.IsDevelopment())
 {
-    options.ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights");
-    options.EnableAdaptiveSampling = true;
-    options.EnableQuickPulseMetricStream = true;
-    options.EnableEventCounterCollectionModule = true;
-    options.EnablePerformanceCounterCollectionModule = true;
-    options.EnableRequestTrackingTelemetryModule = true;
-    options.EnableDependencyTrackingTelemetryModule = true;
-});
+    // Use SQLite for local development
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
+else
+{
+    // Use SQL Server for production
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
+
+// Configure Application Insights - DISABLED FOR NOW
+// builder.Services.AddApplicationInsightsTelemetry(options =>
+// {
+//     options.ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights");
+//     options.EnableAdaptiveSampling = true;
+//     options.EnableQuickPulseMetricStream = true;
+//     options.EnableEventCounterCollectionModule = true;
+//     options.EnablePerformanceCounterCollectionModule = true;
+//     options.EnableRequestTrackingTelemetryModule = true;
+//     options.EnableDependencyTrackingTelemetryModule = true;
+// });
 
 // Configure ASP.NET Core Identity
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
@@ -159,7 +170,7 @@ builder.Services.AddScoped<IRoleService, RoleService>(); // Register RoleService
 builder.Services.AddScoped<IDataProtectionService, DataProtectionService>(); // Register DataProtectionService
 // builder.Services.AddScoped<PaymentService>(); // Register PaymentService - DISABLED FOR CURRENT SPRINT
 builder.Services.AddScoped<IEmergencyService, EmergencyService>(); // Register EmergencyService
-builder.Services.AddScoped<ITelemetryService, ApplicationInsightsTelemetryService>(); // Register TelemetryService
+// builder.Services.AddScoped<ITelemetryService, ApplicationInsightsTelemetryService>(); // Register TelemetryService - DISABLED FOR NOW
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>(); // Register BlobStorageService
 
 // Configure Email Service
@@ -205,8 +216,27 @@ builder.Services.AddDataProtection()
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline with comprehensive logging
-app.UseComprehensiveLogging();
+// Run database migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    try
+    {
+        logger.LogInformation("Starting database migration...");
+        await context.Database.MigrateAsync();
+        logger.LogInformation("Database migration completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while migrating the database.");
+        throw;
+    }
+}
+
+// Configure the HTTP request pipeline with comprehensive logging - DISABLED FOR NOW
+// app.UseComprehensiveLogging();
 
 // Add error handling middleware (should be one of the first middlewares)
 app.UseMiddleware<ErrorHandlingMiddleware>();

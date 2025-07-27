@@ -46,6 +46,7 @@ import FlightCompanionRequestForm from "./forms/FlightCompanionRequestForm";
 import FlightCompanionOfferForm from "./forms/FlightCompanionOfferForm";
 import { useTheme } from "../themes/ThemeProvider";
 import useIsDarkMode from "../themes/useIsDarkMode";
+import { apiPost, apiPut, handleApiResponse } from "../utils/api";
 
 // TypeScript Interfaces
 interface FlightCompanionProps {}
@@ -449,21 +450,8 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
 
   const handleMatch = async (requestId: number, offerId: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('https://localhost:5001/api/flightcompanion/match', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ requestId, offerId }),
-      });
-  
-      if (!response.ok) {
-        const error = await response.json();
-        showSnackbar(error.message || 'Failed to match', 'error');
-        return;
-      }
+      const response = await apiPut('/api/flightcompanion/match', { requestId, offerId });
+      await handleApiResponse(response);
   
       showSnackbar('Match successful!', 'success');
       setSelectedRequestId(null); // Clear selection after successful match
@@ -471,7 +459,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
       refetchRequests();
       refetchOffers();
     } catch (error) {
-      showSnackbar('Error matching: ' + error, 'error');
+      showSnackbar('Error matching: ' + (error instanceof Error ? error.message : error), 'error');
     }
   };
 
@@ -526,28 +514,32 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
     if (!selectedRequestForHelp || !helpMessage.trim()) return;
 
     try {
-      const response = await fetch("/api/flightcompanion/initiate-help", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({
-          requestId: selectedRequestForHelp.id,
-          initialMessage: helpMessage,
-        }),
+      const response = await apiPost("/api/flightcompanion/initiate-help", {
+        requestId: selectedRequestForHelp.id,
+        initialMessage: helpMessage,
       });
 
       if (response.ok) {
+        const data = await response.json();
         showSnackbar("Help message sent successfully!", "success");
         setShowHelpDialog(false);
         setHelpMessage("");
         setSelectedRequestForHelp(null);
       } else {
-        const error = await response.json();
-        showSnackbar(error.message || "Failed to send message", "error");
+        // Handle both JSON and text error responses
+        let errorMessage = "Failed to send message";
+        try {
+          const error = await response.json();
+          errorMessage = error.message || error.error || errorMessage;
+        } catch {
+          // If JSON parsing fails, try to get the text response
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        showSnackbar(errorMessage, "error");
       }
     } catch (error) {
+      console.error("Error sending help message:", error);
       showSnackbar("Error sending help message", "error");
     }
   };

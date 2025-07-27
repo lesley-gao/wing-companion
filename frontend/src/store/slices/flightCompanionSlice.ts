@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { apiGet, apiPost, handleApiResponse } from '../../utils/api';
 
 // Types
 export interface FlightCompanionRequest {
@@ -83,12 +84,9 @@ export const fetchRequests = createAsyncThunk(
   'flightCompanion/fetchRequests',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/flightcompanion/requests');
-      if (!response.ok) {
-        throw new Error('Failed to fetch requests');
-      }
-      const data = await response.json();
-      return data as FlightCompanionRequest[];
+      const response = await apiGet('/api/flightcompanion/requests');
+      const data = await handleApiResponse<FlightCompanionRequest[]>(response);
+      return data;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
     }
@@ -99,12 +97,9 @@ export const fetchOffers = createAsyncThunk(
   'flightCompanion/fetchOffers',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/flightcompanion/offers');
-      if (!response.ok) {
-        throw new Error('Failed to fetch offers');
-      }
-      const data = await response.json();
-      return data as FlightCompanionOffer[];
+      const response = await apiGet('/api/flightcompanion/offers');
+      const data = await handleApiResponse<FlightCompanionOffer[]>(response);
+      return data;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
     }
@@ -115,20 +110,9 @@ export const createRequest = createAsyncThunk(
   'flightCompanion/createRequest',
   async (requestData: Omit<FlightCompanionRequest, 'id' | 'isActive' | 'isMatched' | 'createdAt'>, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/flightcompanion/requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create request');
-      }
-      
-      const data = await response.json();
-      return data as FlightCompanionRequest;
+      const response = await apiPost('/api/flightcompanion/requests', requestData);
+      const data = await handleApiResponse<FlightCompanionRequest>(response);
+      return data;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
     }
@@ -139,20 +123,9 @@ export const createOffer = createAsyncThunk(
   'flightCompanion/createOffer',
   async (offerData: Omit<FlightCompanionOffer, 'id' | 'isAvailable' | 'createdAt'>, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/flightcompanion/offers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(offerData),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create offer');
-      }
-      
-      const data = await response.json();
-      return data as FlightCompanionOffer;
+      const response = await apiPost('/api/flightcompanion/offers', offerData);
+      const data = await handleApiResponse<FlightCompanionOffer>(response);
+      return data;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
     }

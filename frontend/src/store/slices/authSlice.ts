@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { apiGet, apiPost, handleApiResponse } from '../../utils/api';
 
 // Types
 export interface User {
@@ -53,21 +54,8 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        // Return error key for localization
-        return rejectWithValue(error || 'loginFailed');
-      }
-
-      const data = await response.json();
+      const response = await apiPost('/api/auth/login', credentials);
+      const data = await handleApiResponse(response);
       localStorage.setItem('token', data.token);
       return data;
     } catch (error) {
@@ -87,12 +75,8 @@ export const getCurrentUser = createAsyncThunk(
         return rejectWithValue('noToken');
       }
 
-      const response = await fetch('/api/user/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
+      const response = await apiGet('/api/user/profile');
+      
       if (!response.ok) {
         // If unauthorized, clear the token
         if (response.status === 401) {

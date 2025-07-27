@@ -22,6 +22,7 @@ import {
   Person as ProfileIcon,
   Home as HomeIcon,
   AdminPanelSettings as AdminIcon,
+  Message as MessageIcon,
 } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -65,9 +66,15 @@ const getDefaultItems = (isAdmin: boolean = false): NavigationItem[] => {
       }
     ];
   } else {
-    // For regular users, show profile
+    // For regular users, show profile and messages
     return [
       ...baseItems,
+      {
+        textKey: "messages",
+        path: "/messages",
+        icon: <MessageIcon />,
+        requiresAuth: true,
+      },
       {
         textKey: "profile",
         path: "/profile",

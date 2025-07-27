@@ -34,7 +34,7 @@ const FEATURES_DATA: Feature[] = [
   },
   {
     icon: "⭐",
-    title: "Ratings & Reviews",
+    title: "Ratings & Reviews (Coming Soon)",
     desc: "Build trust with transparent ratings and reviews for all users.",
   },
 ];
@@ -58,7 +58,7 @@ const Features: React.FC = () => {
               {feature.icon}
             </span>
             <h3
-              className="text-xl font-extrabold mb-3 tracking-tight"
+              className="text-xl font-extrabold mb-3 tracking-tight text-center"
               style={{ color: "var(--color-primary)" }}
             >
               {feature.title}

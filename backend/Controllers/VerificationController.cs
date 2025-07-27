@@ -20,20 +20,20 @@ namespace NetworkingApp.Controllers
         private readonly ApplicationDbContext _db;
         private readonly IEmailService _emailService;
         private readonly IBlobStorageService _blobStorageService;
-        private readonly ITelemetryService _telemetryService;
+        // private readonly ITelemetryService _telemetryService; // Disabled for now
         private readonly ILogger<VerificationController> _logger;
 
         public VerificationController(
             ApplicationDbContext db, 
             IEmailService emailService,
             IBlobStorageService blobStorageService,
-            ITelemetryService telemetryService,
+            // ITelemetryService telemetryService, // Disabled for now
             ILogger<VerificationController> logger)
         {
             _db = db;
             _emailService = emailService;
             _blobStorageService = blobStorageService;
-            _telemetryService = telemetryService;
+            // _telemetryService = telemetryService; // Disabled for now
             _logger = logger;
         }
 
@@ -133,11 +133,11 @@ namespace NetworkingApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error uploading verification document");
-                _telemetryService.TrackException(ex, new Dictionary<string, string>
-                {
-                    ["operation"] = "UploadVerificationDocument",
-                    ["controller"] = "VerificationController"
-                });
+                // _telemetryService.TrackException(ex, new Dictionary<string, string>
+                // {
+                //     ["operation"] = "UploadVerificationDocument",
+                //     ["controller"] = "VerificationController"
+                // }); // Disabled for now
                 return StatusCode(500, new { message = "An error occurred while uploading the document" });
             }
         }
@@ -370,12 +370,12 @@ namespace NetworkingApp.Controllers
 
                 await _db.SaveChangesAsync();
 
-                // Track telemetry
-                _telemetryService.TrackVerificationDocumentProcessed(
-                    verificationDocument.UserId, 
-                    verificationDocument.FileName, 
-                    dto.Approve, 
-                    dto.Comment);
+                // Track telemetry - DISABLED FOR NOW
+                // _telemetryService.TrackVerificationDocumentProcessed(
+                //     verificationDocument.UserId, 
+                //     verificationDocument.FileName, 
+                //     dto.Approve, 
+                //     dto.Comment);
 
                 // Send notification email to user
                 var user = verificationDocument.User!;
