@@ -37,8 +37,8 @@ namespace NetworkingApp.Services
         /// <param name="amount">Payment amount</param>
         /// <param name="transactionId">Transaction ID</param>
         /// <param name="serviceDetails">Service details</param>
-        Task SendPaymentConfirmationEmailAsync(string userEmail, string userName, 
-            decimal amount, string transactionId, string serviceDetails);
+        // Task SendPaymentConfirmationEmailAsync(string userEmail, string userName, 
+        //     decimal amount, string transactionId, string serviceDetails); // Payment feature disabled for current sprint
 
         /// <summary>
         /// Sends an account verification email
@@ -93,7 +93,7 @@ namespace NetworkingApp.Services
         /// </summary>
         /// <param name="toEmail">Recipient's email address</param>
         /// <param name="receipt">Receipt details</param>
-        Task SendReceiptEmailAsync(string toEmail, ReceiptDto receipt);
+        // Task SendReceiptEmailAsync(string toEmail, ReceiptDto receipt); // Payment feature disabled for current sprint
 
         /// <summary>
         /// Sends a general email with custom content

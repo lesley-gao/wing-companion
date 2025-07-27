@@ -74,25 +74,25 @@ namespace NetworkingApp.Services
             }
         }
 
-        public async Task SendPaymentConfirmationEmailAsync(string userEmail, string userName, 
-            decimal amount, string transactionId, string serviceDetails)
-        {
-            try
-            {
-                var subject = "Payment Confirmation - Flight Companion Platform";
-                var body = await BuildPaymentConfirmationEmailBody(userName, amount, transactionId, serviceDetails);
-                
-                await SendEmailAsync(userEmail, subject, body);
+        // public async Task SendPaymentConfirmationEmailAsync(string userEmail, string userName, 
+        //     decimal amount, string transactionId, string serviceDetails) // Payment feature disabled for current sprint
+        // {
+        //     try
+        //     {
+        //         var subject = "Payment Confirmation - Flight Companion Platform";
+        //         var body = await BuildPaymentConfirmationEmailBody(userName, amount, transactionId, serviceDetails);
+        //         
+        //         await SendEmailAsync(userEmail, subject, body);
 
-                _logger.LogInformation("Payment confirmation email sent to {UserEmail} for transaction {TransactionId}", 
-                    userEmail, transactionId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send payment confirmation email to {UserEmail}", userEmail);
-                throw;
-            }
-        }
+        //         _logger.LogInformation("Payment confirmation email sent to {UserEmail} for transaction {TransactionId}", 
+        //             userEmail, transactionId);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Failed to send payment confirmation email to {UserEmail}", userEmail);
+        //         throw;
+        //     }
+        // }
 
         public async Task SendAccountVerificationEmailAsync(string userEmail, string userName, string verificationLink)
         {
@@ -187,19 +187,19 @@ namespace NetworkingApp.Services
             }
         }
 
-        public async Task SendReceiptEmailAsync(string toEmail, ReceiptDto receipt)
-        {
-            var subject = "Your Payment Receipt";
-            var body = $@"
-                <h2>Payment Receipt</h2>
-                <p>Receipt ID: {receipt.ReceiptId}</p>
-                <p>Amount: {receipt.Amount} {receipt.Currency}</p>
-                <p>Paid At: {receipt.PaidAt.ToLocalTime()}</p>
-                <p>Service: {receipt.ServiceType}</p>
-            ";
-            // Use your existing email sending logic
-            await SendEmailAsync(toEmail, subject, body, false);
-        }
+        // public async Task SendReceiptEmailAsync(string toEmail, ReceiptDto receipt) // Payment feature disabled for current sprint
+        // {
+        //     var subject = "Your Payment Receipt";
+        //     var body = $@"
+        //         <h2>Payment Receipt</h2>
+        //         <p>Receipt ID: {receipt.ReceiptId}</p>
+        //         <p>Amount: {receipt.Amount} {receipt.Currency}</p>
+        //         <p>Paid At: {receipt.PaidAt.ToLocalTime()}</p>
+        //         <p>Service: {receipt.ServiceType}</p>
+        //     ";
+        //     // Use your existing email sending logic
+        //     await SendEmailAsync(toEmail, subject, body, false);
+        // }
 
         public async Task SendEmailAsync(string toEmail, string htmlContent, string subject)
         {
@@ -272,18 +272,18 @@ namespace NetworkingApp.Services
                 .Replace("{{Year}}", DateTime.UtcNow.Year.ToString());
         }
 
-        private async Task<string> BuildPaymentConfirmationEmailBody(string userName, decimal amount, 
-            string transactionId, string serviceDetails)
-        {
-            var template = await GetEmailTemplate("payment-confirmation");
-            
-            return template
-                .Replace("{{UserName}}", userName)
-                .Replace("{{Amount}}", amount.ToString("C", new System.Globalization.CultureInfo("en-NZ")))
-                .Replace("{{TransactionId}}", transactionId)
-                .Replace("{{ServiceDetails}}", serviceDetails)
-                .Replace("{{Year}}", DateTime.UtcNow.Year.ToString());
-        }
+        // private async Task<string> BuildPaymentConfirmationEmailBody(string userName, decimal amount, 
+        //     string transactionId, string serviceDetails) // Payment feature disabled for current sprint
+        // {
+        //     var template = await GetEmailTemplate("payment-confirmation");
+        //     
+        //     return template
+        //         .Replace("{{UserName}}", userName)
+        //         .Replace("{{Amount}}", amount.ToString("C", new System.Globalization.CultureInfo("en-NZ")))
+        //         .Replace("{{TransactionId}}", transactionId)
+        //         .Replace("{{ServiceDetails}}", serviceDetails)
+        //         .Replace("{{Year}}", DateTime.UtcNow.Year.ToString());
+        // }
 
         private async Task<string> BuildAccountVerificationEmailBody(string userName, string verificationLink)
         {
