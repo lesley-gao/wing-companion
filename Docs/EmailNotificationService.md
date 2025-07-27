@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Email Notification Service provides comprehensive email functionality for WingCompanion, sending critical updates and confirmations to users. The service is integrated with the NotificationService to automatically send emails when important events occur.
+The Email Notification Service provides comprehensive email functionality for Wing Companion Platform, sending critical updates and confirmations to users. The service is integrated with the NotificationService to automatically send emails when important events occur.
 
 ## Features
 

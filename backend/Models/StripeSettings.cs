@@ -1,3 +1,7 @@
+// STRIPE SETTINGS DISABLED FOR CURRENT SPRINT
+// Payment features will be implemented in a future sprint
+
+/*
 namespace NetworkingApp.Models
 {
     public class StripeSettings
@@ -7,3 +11,4 @@ namespace NetworkingApp.Models
         public string WebhookSecret { get; set; } = string.Empty;
     }
 }
+*/

@@ -9,7 +9,7 @@ using NetworkingApp.Models;
 using NetworkingApp.Data.SeedData;
 using NetworkingApp.Services;
 using NetworkingApp.Hubs; // Add this using statement
-using Stripe;
+// using Stripe; // Payment feature disabled for current sprint
 using Microsoft.AspNetCore.DataProtection; // Add this using directive
 using NetworkingApp.Configuration; // Add this for logging configuration
 using Serilog;
@@ -21,9 +21,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddComprehensiveLogging(builder.Configuration, builder.Environment);
 builder.Services.AddStructuredLoggingServices();
 
-// Stripe configuration
-builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
-StripeConfiguration.ApiKey = builder.Configuration["Stripe:ApiKey"];
+// Stripe configuration - DISABLED FOR CURRENT SPRINT
+// builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+// StripeConfiguration.ApiKey = builder.Configuration["Stripe:ApiKey"];
 
 // Load environment variables from backend/.env
 try
@@ -157,7 +157,7 @@ builder.Services.AddScoped<IMatchingService, MatchingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>(); // Register NotificationService
 builder.Services.AddScoped<IRoleService, RoleService>(); // Register RoleService
 builder.Services.AddScoped<IDataProtectionService, DataProtectionService>(); // Register DataProtectionService
-builder.Services.AddScoped<PaymentService>(); // Register PaymentService
+// builder.Services.AddScoped<PaymentService>(); // Register PaymentService - DISABLED FOR CURRENT SPRINT
 builder.Services.AddScoped<IEmergencyService, EmergencyService>(); // Register EmergencyService
 builder.Services.AddScoped<ITelemetryService, ApplicationInsightsTelemetryService>(); // Register TelemetryService
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>(); // Register BlobStorageService
