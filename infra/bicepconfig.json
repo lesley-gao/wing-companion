@@ -12,11 +12,7 @@
       "AzurePowerShell"
     ]
   },
-  "moduleAliases": {
-    "ts": {
-      "avm": "ts/avm:1.0.0"
-    }
-  },
+
   "analyzers": {
     "core": {
       "enabled": true,

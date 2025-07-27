@@ -9,7 +9,7 @@ import {
 import { Button, CircularProgress, Box, Typography } from '@mui/material';
 import Receipt from './Receipt';
 
-// TODO: Replace with your actual Stripe publishable key (use env variable in production)
+// TODO: Replace with actual Stripe publishable key (use env variable in production)
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY || 'pk_test_12345');
 
 interface PaymentFormProps {
