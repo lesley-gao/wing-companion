@@ -22,18 +22,18 @@ namespace NetworkingApp.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PickupController> _logger;
         private readonly INotificationService _notificationService;
-        private readonly PaymentService _paymentService;
+        // private readonly PaymentService _paymentService; // Payment feature disabled for current sprint
 
         public PickupController(
             ApplicationDbContext context, 
             ILogger<PickupController> logger,
-            INotificationService notificationService,
-            PaymentService paymentService)
+            INotificationService notificationService)
+            // PaymentService paymentService) // Payment feature disabled for current sprint
         {
             _context = context;
             _logger = logger;
             _notificationService = notificationService;
-            _paymentService = paymentService;
+            // _paymentService = paymentService; // Payment feature disabled for current sprint
         }
 
         // GET: api/Pickup/requests
@@ -307,7 +307,7 @@ namespace NetworkingApp.Controllers
             };
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
-            await _paymentService.HoldFundsAsync(payment.Id, payment.Amount);
+            // await _paymentService.HoldFundsAsync(payment.Id, payment.Amount); // Payment feature disabled for current sprint
 
             // Send notifications to both users
             await _notificationService.SendMatchFoundNotificationAsync(
@@ -331,7 +331,7 @@ namespace NetworkingApp.Controllers
             var payment = await _context.Payments.Include(p => p.Escrow).FirstOrDefaultAsync(p => p.RequestId == req.RequestId && p.RequestType == "Pickup");
             if (payment == null || payment.Escrow == null)
                 return NotFound("No escrowed payment found for this service.");
-            await _paymentService.ReleaseFundsAsync(payment.Escrow.Id);
+            // await _paymentService.ReleaseFundsAsync(payment.Escrow.Id); // Payment feature disabled for current sprint
             return Ok(new { Message = "Service marked as completed and funds released." });
         }
 

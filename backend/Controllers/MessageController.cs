@@ -17,13 +17,13 @@ namespace NetworkingApp.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<MessageController> _logger;
-        private readonly INotificationService _notificationService; // Add notification service
+        // private readonly INotificationService _notificationService; // Temporarily disabled
 
-        public MessageController(ApplicationDbContext context, ILogger<MessageController> logger, INotificationService notificationService)
+        public MessageController(ApplicationDbContext context, ILogger<MessageController> logger) // , INotificationService notificationService)
         {
             _context = context;
             _logger = logger;
-            _notificationService = notificationService;
+            // _notificationService = notificationService;
         }
 
         // GET: api/Message/conversations
@@ -38,8 +38,13 @@ namespace NetworkingApp.Controllers
                     return Unauthorized();
                 }
 
-                var conversations = await _context.Messages
+                // First, get all messages for the user
+                var userMessages = await _context.Messages
                     .Where(m => m.SenderId == userId || m.ReceiverId == userId)
+                    .ToListAsync();
+
+                // Then group them in memory (client-side evaluation)
+                var conversations = userMessages
                     .GroupBy(m => m.ThreadId ?? GenerateThreadId(m.SenderId, m.ReceiverId))
                     .Select(g => new
                     {
@@ -48,7 +53,7 @@ namespace NetworkingApp.Controllers
                         UnreadCount = g.Count(m => m.ReceiverId == userId && !m.IsRead),
                         OtherUserId = g.First().SenderId == userId ? g.First().ReceiverId : g.First().SenderId
                     })
-                    .ToListAsync();
+                    .ToList();
 
                 var result = new List<ConversationSummaryResponse>();
 
@@ -67,7 +72,9 @@ namespace NetworkingApp.Controllers
                                 LastName = otherUser.LastName,
                                 IsVerified = otherUser.IsVerified,
                                 Rating = otherUser.Rating,
-                                PreferredLanguage = otherUser.PreferredLanguage
+                                PreferredLanguage = otherUser.PreferredLanguage,
+                                Email = otherUser.Email,
+                                PhoneNumber = otherUser.PhoneNumber
                             },
                             LastMessage = new MessageResponse
                             {
@@ -149,7 +156,9 @@ namespace NetworkingApp.Controllers
                         LastName = otherUser.LastName,
                         IsVerified = otherUser.IsVerified,
                         Rating = otherUser.Rating,
-                        PreferredLanguage = otherUser.PreferredLanguage
+                        PreferredLanguage = otherUser.PreferredLanguage,
+                        Email = otherUser.Email,
+                        PhoneNumber = otherUser.PhoneNumber
                     },
                     Messages = messages.Select(m => new MessageResponse
                     {
@@ -236,16 +245,16 @@ namespace NetworkingApp.Controllers
                 _context.Messages.Add(message);
                 await _context.SaveChangesAsync();
 
-                // Send real-time notification to receiver
-                var sender = await _context.Users.FindAsync(userId);
-                if (sender != null)
-                {
-                    await _notificationService.SendMessageNotificationAsync(
-                        request.ReceiverId, 
-                        userId.Value, 
-                        $"{sender.FirstName} {sender.LastName}",
-                        message.Content);
-                }
+                // Send real-time notification to receiver - TEMPORARILY DISABLED
+                // var sender = await _context.Users.FindAsync(userId);
+                // if (sender != null)
+                // {
+                //     await _notificationService.SendMessageNotificationAsync(
+                //         request.ReceiverId, 
+                //         userId.Value, 
+                //         $"{sender.FirstName} {sender.LastName}",
+                //         message.Content);
+                // }
 
                 var response = new MessageResponse
                 {
@@ -392,6 +401,45 @@ namespace NetworkingApp.Controllers
             }
         }
 
+        // GET: api/Message/test
+        [HttpGet("test")]
+        public async Task<ActionResult> TestMessages()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized();
+                }
+
+                // Test basic database connection
+                var canConnect = await _context.Database.CanConnectAsync();
+                if (!canConnect)
+                {
+                    return StatusCode(500, new { error = "Cannot connect to database" });
+                }
+
+                // Test Messages table
+                var messageCount = await _context.Messages.CountAsync();
+                var userCount = await _context.Users.CountAsync();
+
+                return Ok(new
+                {
+                    message = "Messages test completed",
+                    canConnect,
+                    messageCount,
+                    userCount,
+                    currentUserId = userId
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in Messages test endpoint");
+                return StatusCode(500, new { error = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
         // GET: api/Message/unread-count
         [HttpGet("unread-count")]
         public async Task<ActionResult<UnreadCountResponse>> GetUnreadCount()
@@ -476,7 +524,9 @@ namespace NetworkingApp.Controllers
                         LastName = receiver.LastName,
                         IsVerified = receiver.IsVerified,
                         Rating = receiver.Rating,
-                        PreferredLanguage = receiver.PreferredLanguage
+                        PreferredLanguage = receiver.PreferredLanguage,
+                        Email = receiver.Email,
+                        PhoneNumber = receiver.PhoneNumber
                     },
                     IsNewConversation = existingMessage == null,
                     RequestId = request.RequestId,
@@ -659,6 +709,8 @@ namespace NetworkingApp.Controllers
         public bool IsVerified { get; set; }
         public decimal Rating { get; set; }
         public string PreferredLanguage { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
     }
 
     public class ConversationSummaryResponse

@@ -35,7 +35,7 @@ namespace NetworkingApp.Services
         private readonly BlobContainerClient _quarantineContainer;
         private readonly IConfiguration _configuration;
         private readonly ILogger<BlobStorageService> _logger;
-        private readonly ITelemetryService _telemetryService;
+        // private readonly ITelemetryService _telemetryService; // Disabled for now
 
         // Allowed file types for verification documents
         private readonly HashSet<string> _allowedContentTypes = new()
@@ -54,12 +54,12 @@ namespace NetworkingApp.Services
 
         public BlobStorageService(
             IConfiguration configuration,
-            ILogger<BlobStorageService> logger,
-            ITelemetryService telemetryService)
+            ILogger<BlobStorageService> logger)
+            // ITelemetryService telemetryService) // Disabled for now
         {
             _configuration = configuration;
             _logger = logger;
-            _telemetryService = telemetryService;
+            // _telemetryService = telemetryService; // Disabled for now
 
             var verificationContainerName = _configuration["BlobStorage:VerificationContainer"];
             var quarantineContainerName = _configuration["BlobStorage:QuarantineContainer"];
@@ -135,8 +135,8 @@ namespace NetworkingApp.Services
 
                 var response = await blobClient.UploadAsync(fileStream, uploadOptions);
 
-                // Track telemetry
-                _telemetryService.TrackVerificationDocumentUploaded(userId, fileName, fileStream.Length);
+                // Track telemetry - DISABLED FOR NOW
+                // _telemetryService.TrackVerificationDocumentUploaded(userId, fileName, fileStream.Length);
 
                 _logger.LogInformation("Successfully uploaded verification document {BlobName} for user {UserId}", 
                     blobName, userId);
@@ -153,11 +153,11 @@ namespace NetworkingApp.Services
             {
                 _logger.LogError(ex, "Error uploading verification document for user {UserId}: {Error}", 
                     userId, ex.Message);
-                _telemetryService.TrackException(ex, new Dictionary<string, string>
-                {
-                    ["operation"] = "UploadVerificationDocument",
-                    ["userId"] = userId.ToString()
-                });
+                // _telemetryService.TrackException(ex, new Dictionary<string, string>
+                // {
+                //     ["operation"] = "UploadVerificationDocument",
+                //     ["userId"] = userId.ToString()
+                // }); // Disabled for now
 
                 return new BlobUploadResult { IsSuccess = false, ErrorMessage = "Upload failed due to server error" };
             }
@@ -222,10 +222,10 @@ namespace NetworkingApp.Services
                 if (response.Value)
                 {
                     _logger.LogInformation("Successfully deleted verification document {BlobName}", blobName);
-                    _telemetryService.TrackCustomEvent("VerificationDocumentDeleted", new Dictionary<string, string>
-                    {
-                        ["blobName"] = blobName
-                    });
+                    // _telemetryService.TrackCustomEvent("VerificationDocumentDeleted", new Dictionary<string, string>
+                    // {
+                    //     ["blobName"] = blobName
+                    // }); // Disabled for now
                 }
 
                 return response.Value;
@@ -263,11 +263,11 @@ namespace NetworkingApp.Services
 
                 _logger.LogWarning("Moved verification document {BlobName} to quarantine. Reason: {Reason}", 
                     blobName, reason);
-                _telemetryService.TrackCustomEvent("VerificationDocumentQuarantined", new Dictionary<string, string>
-                {
-                    ["blobName"] = blobName,
-                    ["reason"] = reason
-                });
+                // _telemetryService.TrackCustomEvent("VerificationDocumentQuarantined", new Dictionary<string, string>
+                // {
+                //     ["blobName"] = blobName,
+                //     ["reason"] = reason
+                // }); // Disabled for now
 
                 return true;
             }

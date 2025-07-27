@@ -6,6 +6,7 @@ using NetworkingApp.Models.DTOs;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using NetworkingApp.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace NetworkingApp.Controllers
 {
@@ -16,18 +17,18 @@ namespace NetworkingApp.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<FlightCompanionController> _logger;
-        private readonly PaymentService _paymentService;
+        // private readonly PaymentService _paymentService; // Payment feature disabled for current sprint
 
         public FlightCompanionController(
             ApplicationDbContext context, 
             IMapper mapper,
-            ILogger<FlightCompanionController> logger,
-            PaymentService paymentService)
+            ILogger<FlightCompanionController> logger)
+            // PaymentService paymentService) // Payment feature disabled for current sprint
         {
             _context = context;
             _mapper = mapper;
             _logger = logger;
-            _paymentService = paymentService;
+            // _paymentService = paymentService; // Payment feature disabled for current sprint
         }
 
         // ✅ EXISTING - GET: api/flightcompanion/requests
@@ -141,13 +142,13 @@ namespace NetworkingApp.Controllers
 
                 if (flightRequest == null)
                 {
-                    return NotFound("Flight companion request not found or already matched");
+                    return NotFound(new { message = "Flight companion request not found or already matched" });
                 }
 
                 // Prevent self-helping
                 if (flightRequest.UserId == userId)
                 {
-                    return BadRequest("Cannot help with your own request");
+                    return BadRequest(new { message = "Cannot help with your own request" });
                 }
 
                 // Create initial message
@@ -500,7 +501,7 @@ namespace NetworkingApp.Controllers
 
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
-            await _paymentService.HoldFundsAsync(payment.Id, payment.Amount);
+            // await _paymentService.HoldFundsAsync(payment.Id, payment.Amount); // Payment feature disabled for current sprint
 
             // TODO: Add notifications if needed
 
@@ -517,7 +518,7 @@ namespace NetworkingApp.Controllers
             if (payment == null || payment.Escrow == null)
                 return NotFound("No escrowed payment found for this service.");
 
-            await _paymentService.ReleaseFundsAsync(payment.Escrow.Id);
+            // await _paymentService.ReleaseFundsAsync(payment.Escrow.Id); // Payment feature disabled for current sprint
 
             return Ok(new { Message = "Service marked as completed and funds released." });
         }
@@ -534,7 +535,11 @@ namespace NetworkingApp.Controllers
 
         public class InitiateHelpRequest
         {
+            [Required]
             public int RequestId { get; set; }
+            
+            [Required]
+            [StringLength(1000, MinimumLength = 1, ErrorMessage = "Message must be between 1 and 1000 characters")]
             public string InitialMessage { get; set; } = string.Empty;
         }
 

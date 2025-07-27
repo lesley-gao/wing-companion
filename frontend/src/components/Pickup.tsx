@@ -47,6 +47,7 @@ import PickupRequestForm from "./forms/PickupRequestForm";
 import PickupOfferForm from "./forms/PickupOfferForm";
 import { useTheme } from "../themes/ThemeProvider";
 import useIsDarkMode from "../themes/useIsDarkMode";
+import { apiPut, handleApiResponse } from "../utils/api";
 
 // TypeScript Interfaces
 interface PickupProps {}
@@ -515,21 +516,8 @@ const Pickup: React.FC<PickupProps> = () => {
 
   const handlePickupMatch = async (requestId: number, offerId: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('https://localhost:5001/api/pickup/match', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ requestId, offerId }),
-      });
-  
-      if (!response.ok) {
-        const error = await response.json();
-        showSnackbar(error.message || 'Failed to match', 'error');
-        return;
-      }
+      const response = await apiPut('/api/pickup/match', { requestId, offerId });
+      await handleApiResponse(response);
   
       showSnackbar('Pickup match successful!', 'success');
       setSelectedRequestId(null); // Clear selection after successful match
@@ -537,7 +525,7 @@ const Pickup: React.FC<PickupProps> = () => {
       refetchRequests();
       refetchOffers();
     } catch (error) {
-      showSnackbar('Error matching: ' + error, 'error');
+      showSnackbar('Error matching: ' + (error instanceof Error ? error.message : error), 'error');
     }
   };
 

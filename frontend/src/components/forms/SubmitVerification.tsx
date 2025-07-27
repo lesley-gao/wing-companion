@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiGet, apiPost, handleApiResponse } from "../../utils/api";
 import {
   Button,
   Box,
@@ -25,12 +26,7 @@ const SubmitVerification: React.FC = () => {
   const checkVerificationStatus = async () => {
     try {
       setLoadingStatus(true);
-      const res = await fetch("https://localhost:5001/api/verification/status", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await apiGet('/api/verification/status');
       
       if (res.ok) {
         const data = await res.json();
@@ -70,13 +66,7 @@ const SubmitVerification: React.FC = () => {
     formData.append("file", file);
 
     try {
-      const res = await fetch("https://localhost:5001/api/verification/upload", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: formData,
-      });
+          const res = await apiPost('/api/verification/upload', formData);
       
       const data = await res.json();
       

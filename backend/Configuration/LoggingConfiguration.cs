@@ -100,7 +100,7 @@ namespace NetworkingApp.Configuration
         public static IServiceCollection AddStructuredLoggingServices(this IServiceCollection services)
         {
             services.AddHttpContextAccessor();
-            services.AddScoped<NetworkingApp.Services.IStructuredLoggingService, NetworkingApp.Services.StructuredLoggingService>();
+            // services.AddScoped<NetworkingApp.Services.IStructuredLoggingService, NetworkingApp.Services.StructuredLoggingService>(); // DISABLED FOR NOW
             
             return services;
         }

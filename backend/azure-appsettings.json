@@ -1,0 +1,12 @@
+{
+    "ASPNETCORE_ENVIRONMENT": "Production",
+    "ConnectionStrings__DefaultConnection": "Server=tcp:flightcompanion-sqlserver.database.windows.net,1433;Initial Catalog=FlightCompanionDB;Persist Security Info=False;User ID=flightcompanionadmin;Password=Flightcompanion2025;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;",
+    "JwtSettings__SecretKey": "6pmIfDg6KP7LoERFHdS0YSKfmoememjuzYAECee60lY=",
+    "JwtSettings__Issuer": "WingCompanionPlatform",
+    "JwtSettings__Audience": "WingCompanionUsers",
+    "EmailConfiguration__SmtpUsername": "wingcompanion@gmail.com",
+    "EmailConfiguration__SmtpPassword": "ivvz tjjs dure zngt",
+    "EmailConfiguration__FromEmail": "wingcompanion@gmail.com",
+    "EmailConfiguration__ReplyToEmail": "wingcompanion@gmail.com",
+    "AZURE_BLOB_CONNECTION_STRING": "DefaultEndpointsProtocol=https;AccountName=flightcompanionstorage;AccountKey=rGCnpAStAYHr2Q==;EndpointSuffix=core.windows.net"
+  }
