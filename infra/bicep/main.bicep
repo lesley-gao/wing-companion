@@ -52,8 +52,7 @@ param stripeWebhookSecret string = ''
 @secure()
 param emailSmtpPassword string = ''
 
-@description('The environment name for the deployment')
-param environmentName string = 'dev'
+
 
 // ----------------------------------------------------------------------------------------------------
 // Custom Domain & SSL Certificate Parameters

@@ -866,10 +866,10 @@ const Pickup: React.FC<PickupProps> = () => {
                   <Grid
                     item
                     xs={12}
-                    sm={12}
-                    md={6}
+                    sm={6}
+                    md={4}
                     lg={4}
-                    xl={3}
+                    xl={4}
                     key={request.id}
                     className="flex flex-col"
                   >
@@ -1025,10 +1025,10 @@ const Pickup: React.FC<PickupProps> = () => {
                   <Grid
                     item
                     xs={12}
-                    sm={12}
-                    md={6}
+                    sm={6}
+                    md={4}
                     lg={4}
-                    xl={3}
+                    xl={4}
                     key={offer.id}
                     className="flex flex-col"
                   >

@@ -29,8 +29,7 @@ import {
   Person as PersonIcon,
 } from "@mui/icons-material";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { addNotification } from "../store/slices/uiSlice";
+import { useAppSelector } from "../store/hooks";
 import { selectIsAuthenticated } from "../store/slices/authSelectors";
 import {
   useGetFlightCompanionRequestsQuery,
@@ -79,7 +78,6 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
   });
 
   // Redux Integration
-  const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
   // RTK Query hooks replace manual fetch calls and Redux slice integration
@@ -520,7 +518,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         showSnackbar("Help message sent successfully!", "success");
         setShowHelpDialog(false);
         setHelpMessage("");
@@ -805,10 +803,10 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
                       <Grid
                         item
                         xs={12}
-                        sm={12}
-                        md={6}
+                        sm={6}
+                        md={4}
                         lg={4}
-                        xl={3}
+                        xl={4}
                         key={request.id}
                         className="flex flex-col"
                       >
@@ -857,7 +855,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
                           "&:hover": {
                             backgroundColor: "rgba(22, 128, 70, 0.9)",
                           },
-                          height: "56px", // Match the default TextField height
+                          height: "56px",
                         }}
                       >
                         Search Helpers
@@ -879,7 +877,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
                             borderColor: "rgba(22, 128, 70, 0.9)",
                             backgroundColor: "rgba(22, 128, 70, 0.1)",
                           },
-                          height: "56px", // Match the default TextField height
+                          height: "56px",
                         }}
                       >
                         Clear Search
@@ -947,8 +945,8 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
                       <Grid
                         item
                         xs={12}
-                        sm={12}
-                        md={6}
+                        sm={6}
+                        md={4}
                         lg={4}
                         xl={4}
                         key={offer.id}
