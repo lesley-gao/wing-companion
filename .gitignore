@@ -11,6 +11,15 @@
 *.sln.docstates
 *.env
 
+# Ignore env files everywhere
+.env
+.env.*
+*.env
+**/.env
+**/.env.*
+frontend/.env*
+backend/.env*
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
