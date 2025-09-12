@@ -447,13 +447,6 @@ resource backupActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
         useCommonAlertSchema: true
       }
     ]
-    webhookReceivers: [
-      {
-        name: 'Slack Notifications'
-        serviceUri: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'
-        useCommonAlertSchema: true
-      }
-    ]
     azureFunctionReceivers: []
     armRoleReceivers: [
       {
