@@ -10,6 +10,7 @@ A community-focused networking platform designed for Chinese community members i
   - [Prerequisites](#prerequisites)
   - [Local Development](#local-development)
 - [📁 Project Structure](#-project-structure)
+ - [UI Preview](#ui-preview)
 
 <!-- ## 📹 Project Video Presentation
 
@@ -57,6 +58,12 @@ A community-focused networking platform designed for Chinese community members i
    - Material-UI theme provider with custom color schemes
    - Persistent theme preferences
    - Smooth transitions and consistent styling
+
+## UI Preview
+
+![WingCompanion Light Mode](frontend/public/images/WingCompanion-lightmode.png)
+
+![WingCompanion Dark Mode](frontend/public/images/WingCompanion-darkmode.png)
 
 ## 🚀 Quick Start
 
