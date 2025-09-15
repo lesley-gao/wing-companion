@@ -70,7 +70,7 @@ A community-focused networking platform designed for Chinese community members i
 
 ![WingCompanion Light Mode](frontend/public/images/mockup1.png)
 
-![WingCompanion Dark Mode](frontend/public/images/mockup1.png)
+![WingCompanion Dark Mode](frontend/public/images/mockup2.png)
 
 ![WingCompanion Light Mode2](frontend/public/images/mockup3.png)
 
