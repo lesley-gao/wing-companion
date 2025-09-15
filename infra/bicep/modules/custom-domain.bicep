@@ -58,8 +58,8 @@ param enableAuthentication bool = false
 
 var certificateName = replace(customDomainName, '.', '-')
 var dnsZoneName = rootDomainName
-// Fix subdomain logic: ensure always a string, use single quotes for interpolation
-var subdomain = length(customDomainName) > length(rootDomainName) ? replace(customDomainName, '.' + rootDomainName, '') : '@'
+var subdomain = length(customDomainName) > length(rootDomainName) ? 
+  replace(customDomainName, '.${rootDomainName}', '') : '@'
 
 // Environment-specific certificate configuration
 var certificateConfig = {
@@ -118,8 +118,9 @@ resource aRecord 'Microsoft.Network/dnsZones/A@2018-05-01' = if (enableDnsZoneMa
 }
 
 // TXT record for domain verification
+resource txtRecord 'Microsoft.Network/dnsZones/TXT@2018-05-01' = if (enableDnsZoneManagement) {
   parent: dnsZone
-  name: subdomain == '@' ? 'asuid' : 'asuid.' + subdomain
+  name: 'asuid.${subdomain == '@' ? '' : subdomain}'
   properties: {
     TTL: 3600
     TXTRecords: [
@@ -162,7 +163,7 @@ resource customDomain 'Microsoft.Web/sites/hostNameBindings@2022-09-01' = {
   properties: {
     siteName: appServiceName
     hostNameType: 'Verified'
-  customHostNameDnsRecordType: subdomain == '@' ? 'A' : 'CName'
+    customHostNameDnsRecordType: subdomain == '@' ? 'A' : 'CName'
     sslState: 'SniEnabled'
     thumbprint: managedCertificate.properties.thumbprint
   }
@@ -376,7 +377,7 @@ output dnsValidationRecords object = {
     description: 'CNAME record for domain validation'
   }
   txt: {
-    name: subdomain == '@' ? 'asuid' : 'asuid.' + subdomain
+    name: 'asuid.${subdomain == '@' ? '' : subdomain}'
     value: managedCertificate.properties.subjectName
     description: 'TXT record for App Service domain verification'
   }

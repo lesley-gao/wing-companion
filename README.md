@@ -6,11 +6,11 @@ A community-focused networking platform designed for Chinese community members i
 
 <!-- - [📹 Project Video Presentation](#-project-video-presentation) -->
 - [Project Overview](#project-overview)
+- [Mockups](#mockups)
 - [🚀 Quick Start](#-quick-start)
   - [Prerequisites](#prerequisites)
   - [Local Development](#local-development)
 - [📁 Project Structure](#-project-structure)
- - [UI Preview](#ui-preview)
 
 <!-- ## 📹 Project Video Presentation
 
@@ -19,6 +19,7 @@ A community-focused networking platform designed for Chinese community members i
 ## Project Overview:
 
 1. **Brief Introduction to the Project**
+
    - WingCompanion is a comprehensive networking platform that connects Chinese community members in Auckland, New Zealand
    - Addresses the specific challenge of language barriers and navigation difficulties faced by non-English speaking elderly travelers
    - Facilitates travel companion matching and airport pickup services through a trusted community network
@@ -26,6 +27,7 @@ A community-focused networking platform designed for Chinese community members i
    - Designed for mutual aid principles where community members both give and receive assistance
 
 2. **How the Project Relates to "Networking" Theme**
+
    - **Community Building**: Creates a network of trusted travelers and helpers
    - **Social Connections**: Enables users to connect before, during, and after travel
    - **Trust Networks**: Verification system builds trust within the community
@@ -33,6 +35,7 @@ A community-focused networking platform designed for Chinese community members i
    - **Networking**: Connects people with similar travel patterns
 
 3. **Unique Features Worth Highlighting**
+
    - **Bilingual Support**: Full English/Chinese interface for the target community
    - **Real-time Messaging**: Live chat with SignalR for instant communication
    - **Comprehensive Verification**: User verification for safety
@@ -40,34 +43,41 @@ A community-focused networking platform designed for Chinese community members i
 4. **Advanced Features Implementation Checklist**
 
    ✅ **Storybook Integration**: All UI components documented and tested in Storybook
+
    - Component library with interactive documentation
    - Visual testing and component development workflow
    - Accessibility testing and responsive design validation
 
    ✅ **Unit Testing**: Comprehensive test coverage for both frontend and backend
+
    - Frontend: Jest + React Testing Library (>80% coverage)
    - Backend: MSTest + Moq (>85% coverage)
    - API integration tests for all endpoints
 
    ✅ **State Management**: Redux Toolkit implementation
+
    - Centralized state management for user data, UI state, and API caching
    - RTK Query for efficient API data fetching and caching
    - Optimistic updates and error handling
 
    ✅ **Theme Switching**: Light/Dark mode support
+
    - Material-UI theme provider with custom color schemes
    - Persistent theme preferences
    - Smooth transitions and consistent styling
 
 ## UI Preview
 
-![WingCompanion Light Mode](frontend/public/images/WingCompanion-lightmode.png)
+![WingCompanion Light Mode](frontend/public/images/mockup1.png)
 
-![WingCompanion Dark Mode](frontend/public/images/WingCompanion-darkmode.png)
+![WingCompanion Dark Mode](frontend/public/images/mockup1.png)
+
+![WingCompanion Light Mode2](frontend/public/images/mockup3.png)
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Node.js 18+](https://nodejs.org/)
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
@@ -75,12 +85,14 @@ A community-focused networking platform designed for Chinese community members i
 ### Local Development
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd WingCompanion
    ```
 
 2. **Setup backend**
+
    ```bash
    cd backend
    dotnet restore
@@ -89,6 +101,7 @@ A community-focused networking platform designed for Chinese community members i
    ```
 
 3. **Setup frontend**
+
    ```bash
    cd frontend
    npm install
@@ -96,11 +109,12 @@ A community-focused networking platform designed for Chinese community members i
    ```
 
 4. **Run the application**
+
    ```bash
    # Terminal 1: Start backend
    cd backend
    dotnet run
-   
+
    # Terminal 2: Start frontend (in new terminal)
    cd frontend
    npm start
