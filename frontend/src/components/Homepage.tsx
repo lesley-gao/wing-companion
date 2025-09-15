@@ -19,7 +19,7 @@ const Homepage: React.FC = () => {
     >
       {/* Navigation */}
       <Navigation />
-      
+
       {/* Hero Section */}
       <div
         className="flex flex-col justify-center min-h-screen relative p-8 md:p-16 lg:p-32"
@@ -30,7 +30,7 @@ const Homepage: React.FC = () => {
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          transition: "background 0.3s"
+          transition: "background 0.3s",
         }}
       >
         {/* overlay for text readability */}
@@ -47,8 +47,8 @@ const Homepage: React.FC = () => {
           <h1
             className={
               isDarkMode
-                ? "text-5xl font-bold mb-4 text-[#00BCD4] drop-shadow-lg font-serif"
-                : "text-5xl font-bold mb-4 text-white drop-shadow-lg font-serif"
+                ? "text-5xl font-bold mb-4 text-[#00BCD4] drop-shadow-md font-serif"
+                : "text-5xl font-bold mb-4 drop-shadow-md font-serif"
             }
           >
             WingCompanion
@@ -56,11 +56,12 @@ const Homepage: React.FC = () => {
           <p
             className={
               isDarkMode
-                ? "text-xl font-medium text-gray-200 max-w-xl mb-8 drop-shadow-lg"
-                : "text-xl font-medium text-white max-w-xl mb-8 drop-shadow-lg"
+                ? "text-xl  text-gray-200 max-w-xl mb-8"
+                : "text-xl  text-gray-700  max-w-xl mb-8"
             }
           >
-            Connecting travelers for safer, more enjoyable journeys — find trusted flight companions and reliable airport pickups.
+            Connecting travelers for safer, more enjoyable journeys — find
+            trusted flight companions and reliable airport pickups.
           </p>
           {/* Action Buttons */}
           <div className="flex gap-4 flex-col sm:flex-row">
@@ -68,7 +69,7 @@ const Homepage: React.FC = () => {
               to="/flight-companion"
               className={
                 isDarkMode
-                  ? "inline-block no-underline bg-[#232B3A] text-[#00BCD4] font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-[#1A2330] hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-center border-2 border-[#00BCD4]"
+                  ? "inline-block no-underline bg-[#232B3A] text-[#00BCD4] font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-[#1A2330] hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-center border-2 border-[#00BCD4] "
                   : "inline-block no-underline bg-white text-[#020F6F] font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-blue-50 hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-center"
               }
               style={{ transition: "background 0.3s, color 0.3s" }}

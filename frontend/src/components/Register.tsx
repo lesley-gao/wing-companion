@@ -151,10 +151,13 @@ const Register: React.FC = () => {
           onClose={() => setSuccessSnackbarOpen(false)}
           sx={{ width: "100%" }}
         >
-          {t("registrationSuccess", "Registration successful! Welcome to the platform.")}
+          {t(
+            "registrationSuccess",
+            "Registration successful! Welcome to the platform."
+          )}
         </Alert>
       </Snackbar>
-      
+
       <Box
         maxWidth={800}
         mx="auto"
@@ -163,11 +166,54 @@ const Register: React.FC = () => {
         boxShadow={2}
         borderRadius={2}
         bgcolor="background.paper"
+        sx={{ fontSize: "14px" }}
       >
-        <Typography variant="h5" mb={2} align="center">
+        <Typography
+          variant="h3"
+          mb={2}
+          align="center"
+          sx={{ minWidth: 0, minHeight: 0 }}
+          className="text-gray-900 dark:text-gray-100 mb-2"
+        >
           {t("registerTitle")}
         </Typography>
 
+        {/* Prompt for existing users to login */}
+        <Box
+          mb={3}
+          textAlign="center"
+          className="mt-8 flex justify-center items-center"
+        >
+          <Typography
+            variant="body1"
+            sx={{ fontSize: 16, color: "#374151", display: "inline", mr: 1 }}
+            className="dark:text-gray-100"
+          >
+            {t("alreadyHaveAccount", "Already have an account?")}
+          </Typography>
+          <Typography
+            variant="body1"
+            component="span"
+            onClick={() => navigate("/login")}
+            sx={{
+              fontSize: 16,
+              color: "primary.main",
+              fontWeight: 600,
+              textDecoration: "underline",
+              cursor: "pointer",
+              transition: "transform 0.2s",
+              "&:hover": {
+                transform: "scale(1.05)",
+                textDecoration: "underline",
+              },
+            }}
+            className="dark:text-gray-100"
+          >
+            {t("loginHere", "Login here")}
+          </Typography>
+        </Box>
+
+        <hr className="my-6 border-t-2 border-gray-200" />
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <Grid container spacing={1}>
             <Grid item xs={12} md={6}>
@@ -181,7 +227,9 @@ const Register: React.FC = () => {
                 FormHelperTextProps={{
                   sx: { color: errors.firstName ? "error.main" : "info.main" },
                 }}
-                helperText={errors.firstName?.message || "Maximum 50 characters"}
+                helperText={
+                  errors.firstName?.message || "Maximum 50 characters"
+                }
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -209,7 +257,9 @@ const Register: React.FC = () => {
                 FormHelperTextProps={{
                   sx: { color: errors.email ? "error.main" : "info.main" },
                 }}
-                helperText={errors.email?.message || "Enter a valid email address"}
+                helperText={
+                  errors.email?.message || "Enter a valid email address"
+                }
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -251,14 +301,18 @@ const Register: React.FC = () => {
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
-                label={t("phoneNumber") + " (" + t("optional", "optional") + ")"}
+                label={
+                  t("phoneNumber") + " (" + t("optional", "optional") + ")"
+                }
                 fullWidth
                 margin="normal"
                 placeholder="Optional. Enter a valid phone number"
                 {...register("phoneNumber")}
                 error={!!errors.phoneNumber}
                 FormHelperTextProps={{
-                  sx: { color: errors.phoneNumber ? "error.main" : "info.main" },
+                  sx: {
+                    color: errors.phoneNumber ? "error.main" : "info.main",
+                  },
                 }}
                 helperText={
                   errors.phoneNumber?.message ||
@@ -309,14 +363,18 @@ const Register: React.FC = () => {
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
-                label={t("emergencyPhone") + " (" + t("optional", "optional") + ")"}
+                label={
+                  t("emergencyPhone") + " (" + t("optional", "optional") + ")"
+                }
                 fullWidth
                 margin="normal"
                 placeholder="Optional. Enter a valid phone number"
                 {...register("emergencyPhone")}
                 error={!!errors.emergencyPhone}
                 FormHelperTextProps={{
-                  sx: { color: errors.emergencyPhone ? "error.main" : "info.main" },
+                  sx: {
+                    color: errors.emergencyPhone ? "error.main" : "info.main",
+                  },
                 }}
                 helperText={
                   errors.emergencyPhone?.message ||
@@ -331,7 +389,7 @@ const Register: React.FC = () => {
                 color="primary"
                 fullWidth
                 disabled={isLoading}
-                sx={{ mt: 2, padding: 2, fontSize: 16, fontWeight: "bold" }}
+                sx={{ mt: 2, padding: 2, fontSize: "14px", fontWeight: "bold" }}
               >
                 {isLoading ? t("registering", "Registering...") : t("register")}
               </Button>

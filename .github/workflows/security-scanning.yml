@@ -213,6 +213,7 @@ jobs:
         fetch-depth: 0
     
     - name: 🔍 Scan for Secrets with TruffleHog
+      if: ${{ github.event.before != github.sha }}
       uses: trufflesecurity/trufflehog@main
       with:
         path: ./

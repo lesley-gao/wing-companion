@@ -15,6 +15,7 @@ import {
   ListItemText,
   Button,
 } from "@mui/material";
+import useIsDarkMode from "../themes/useIsDarkMode";
 import {
   Menu as MenuIcon,
   Flight as FlightIcon,
@@ -63,7 +64,7 @@ const getDefaultItems = (isAdmin: boolean = false): NavigationItem[] => {
         path: "/admin",
         icon: <AdminIcon />,
         requiresAuth: true,
-      }
+      },
     ];
   } else {
     // For regular users, show profile and messages
@@ -80,7 +81,7 @@ const getDefaultItems = (isAdmin: boolean = false): NavigationItem[] => {
         path: "/profile",
         icon: <ProfileIcon />,
         requiresAuth: true,
-      }
+      },
     ];
   }
 };
@@ -96,6 +97,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const isDarkMode = useIsDarkMode();
 
   // Authentication state from Redux
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
@@ -104,21 +106,24 @@ export const Navigation: React.FC<NavigationProps> = ({
   // Check if user is admin
   const isAdmin = React.useMemo(() => {
     if (!isAuthenticated || !user) return false;
-    
+
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const userRoles = payload?.role || 
-                         payload?.roles || 
-                         payload?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 
-                         [];
-        return Array.isArray(userRoles) 
-          ? userRoles.includes('Admin')
-          : userRoles === 'Admin';
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const userRoles =
+          payload?.role ||
+          payload?.roles ||
+          payload?.[
+            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          ] ||
+          [];
+        return Array.isArray(userRoles)
+          ? userRoles.includes("Admin")
+          : userRoles === "Admin";
       }
     } catch (error) {
-      console.error('Error checking admin status:', error);
+      console.error("Error checking admin status:", error);
     }
     return false;
   }, [isAuthenticated, user]);
@@ -173,13 +178,13 @@ export const Navigation: React.FC<NavigationProps> = ({
         {/* Mobile Auth Buttons */}
         {!isAuthenticated ? (
           <>
-            <ListItem
+            {/* <ListItem
               component={Link}
               to="/login"
               sx={{ color: "inherit", textDecoration: "none" }}
             >
               <ListItemText primary={t("login")} />
-            </ListItem>
+            </ListItem> */}
             <ListItem
               component={Link}
               to="/register"
@@ -201,8 +206,13 @@ export const Navigation: React.FC<NavigationProps> = ({
     <>
       <AppBar
         position="static"
-        className="shadow-sm border-b border-gray-200 text-color-primary bg-[#CBDDDF]"
+        className="shadow-sm border-b"
         elevation={0}
+        sx={{
+          backgroundColor: isDarkMode ? "transparent" : "#CBDDDF",
+          color: isDarkMode ? "#fff" : "var(--color-primary)",
+          borderColor: isDarkMode ? "transparent" : "#CBDDDF",
+        }}
       >
         <Toolbar>
           {isMobile && (
@@ -212,34 +222,38 @@ export const Navigation: React.FC<NavigationProps> = ({
               edge="start"
               onClick={handleDrawerToggle}
               className="mr-2"
-              sx={{ color: "var(--color-primary)" }}
+              sx={{ color: isDarkMode ? "#fff" : "var(--color-primary)" }}
             >
               <MenuIcon />
             </IconButton>
           )}
 
-          <Typography
-            variant="h6"
-            component={Link}
+          <Link
             to="/"
             className="flex-grow font-bold no-underline transition-colors flex items-center"
-            sx={{
-              color: "var(--color-primary)",
-              "&:hover": { color: "#061e4a" },
-            }}
+            style={{ textDecoration: "none" }}
           >
             <img
-              src="/images/logo.png"
+              src={isDarkMode ? "/images/logo-white.png" : "/images/logo.png"}
               alt="WingCompanion Logo"
               style={{
                 height: 40,
                 marginRight: 12,
                 display: "inline-block",
                 verticalAlign: "middle",
+                filter: isDarkMode ? undefined : undefined,
               }}
             />
-            {title}
-          </Typography>
+            <h2
+              style={{
+                fontFamily: "PolySans, Arial, sans-serif",
+                fontWeight: 700,
+                color: isDarkMode ? "#fff" : "var(--color-primary)",
+              }}
+            >
+              {title}
+            </h2>
+          </Link>
 
           {!isMobile && (
             <Box className="flex items-center space-x-1">
@@ -250,12 +264,20 @@ export const Navigation: React.FC<NavigationProps> = ({
                   to={item.path}
                   className={`flex items-center space-x-2 px-5 py-2 text-sm font-medium transition-colors duration-200 no-underline ${
                     location.pathname === item.path
-                      ? "bg-white/40" // subtle highlight for active
-                      : "hover:bg-white/30"
+                      ? isDarkMode
+                        ? "bg-white/20"
+                        : "bg-white/40" // subtle highlight for active
+                      : isDarkMode
+                        ? "hover:bg-white/10"
+                        : "hover:bg-white/30"
                   }`}
-                  sx={{ color: "var(--color-primary)" }}
+                  sx={{ color: isDarkMode ? "#fff" : "var(--color-primary)" }}
                 >
-                  {item.icon}
+                  {React.cloneElement(item.icon, {
+                    style: {
+                      color: isDarkMode ? "#fff" : "var(--color-primary)",
+                    },
+                  })}
                   <span>{t(item.textKey)}</span>
                 </Button>
               ))}
@@ -265,20 +287,12 @@ export const Navigation: React.FC<NavigationProps> = ({
                 <Box className="flex items-center space-x-2 ml-4">
                   <Button
                     component={Link}
-                    to="/login"
-                    color="inherit"
-                    sx={{ color: "var(--color-primary)" }}
-                  >
-                    {t("login")}
-                  </Button>
-                  <Button
-                    component={Link}
                     to="/register"
                     color="inherit"
                     variant="outlined"
-                    sx={{ 
-                      color: "var(--color-primary)",
-                      borderColor: "var(--color-primary)"
+                    sx={{
+                      color: isDarkMode ? "#fff" : "var(--color-primary)",
+                      borderColor: isDarkMode ? "#fff" : "var(--color-primary)",
                     }}
                   >
                     {t("register")}
@@ -286,16 +300,10 @@ export const Navigation: React.FC<NavigationProps> = ({
                 </Box>
               ) : (
                 <Box className="flex items-center space-x-2 ml-4">
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "var(--color-primary)" }}
-                  >
-                    {t("Hi")}, {isAdmin ? "Admin" : (user?.firstName || t("user"))}
-                  </Typography>
                   <Button
                     color="inherit"
                     onClick={handleLogout}
-                    sx={{ color: "var(--color-primary)" }}
+                    sx={{ color: isDarkMode ? "#fff" : "var(--color-primary)" }}
                   >
                     {t("logout")}
                   </Button>

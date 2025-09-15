@@ -33,7 +33,10 @@ import {
 } from "@mui/icons-material";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { addNotification } from "../store/slices/uiSlice";
-import { selectIsAuthenticated, selectAuthUser } from "../store/slices/authSelectors";
+import {
+  selectIsAuthenticated,
+  selectAuthUser,
+} from "../store/slices/authSelectors";
 import {
   useGetPickupRequestsQuery,
   useGetPickupOffersQuery,
@@ -82,7 +85,8 @@ const Pickup: React.FC<PickupProps> = () => {
     useCreatePickupRequestMutation();
 
   // Add the mutation hook
-  const [createOffer, { isLoading: createOfferLoading }] = useCreatePickupOfferMutation();
+  const [createOffer, { isLoading: createOfferLoading }] =
+    useCreatePickupOfferMutation();
 
   // Loading and error states
   const isLoading = requestsLoading || offersLoading;
@@ -92,7 +96,9 @@ const Pickup: React.FC<PickupProps> = () => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [showCreateDialog, setShowCreateDialog] = useState<boolean>(false);
   const [formType, setFormType] = useState<"request" | "offer">("request");
-  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
+  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(
+    null
+  );
   const [searchFilters, setSearchFilters] = useState<{
     airport: string;
     flightNumber: string;
@@ -100,7 +106,10 @@ const Pickup: React.FC<PickupProps> = () => {
     airport: "",
     flightNumber: "",
   });
-  const [searchParams, setSearchParams] = useState<{ airport?: string; flightNumber?: string } | null>(null);
+  const [searchParams, setSearchParams] = useState<{
+    airport?: string;
+    flightNumber?: string;
+  } | null>(null);
   const [driverSearchFilters, setDriverSearchFilters] = useState<{
     airport: string;
     vehicleType: string;
@@ -108,7 +117,10 @@ const Pickup: React.FC<PickupProps> = () => {
     airport: "",
     vehicleType: "",
   });
-  const [driverSearchParams, setDriverSearchParams] = useState<{ airport?: string; vehicleType?: string } | null>(null);
+  const [driverSearchParams, setDriverSearchParams] = useState<{
+    airport?: string;
+    vehicleType?: string;
+  } | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -319,8 +331,9 @@ const Pickup: React.FC<PickupProps> = () => {
           label={request.isMatched ? "Driver Found" : "Looking for Driver"}
           color={request.isMatched ? "success" : "default"}
           variant={request.isMatched ? "filled" : "outlined"}
-          sx={
-            request.isMatched
+          sx={{
+            borderRadius: "8px",
+            ...(request.isMatched
               ? {
                   backgroundColor: isDarkMode ? "#FFD600" : undefined,
                   color: isDarkMode ? "#333" : undefined,
@@ -328,8 +341,8 @@ const Pickup: React.FC<PickupProps> = () => {
               : {
                   color: isDarkMode ? "#00BCD4" : undefined,
                   borderColor: isDarkMode ? "#00BCD4" : undefined,
-                }
-          }
+                }),
+          }}
         />
         <Box className="flex gap-2">
           <Button
@@ -351,25 +364,39 @@ const Pickup: React.FC<PickupProps> = () => {
           </Button>
           {activeTab === 1 && !request.isMatched && (
             <Button
-              variant={selectedRequestId === request.id ? "contained" : "outlined"}
+              variant={
+                selectedRequestId === request.id ? "contained" : "outlined"
+              }
               size="small"
               sx={{
-                color: selectedRequestId === request.id 
-                  ? "#fff" 
-                  : (isDarkMode ? "#00BCD4" : "#0B3866"),
-                backgroundColor: selectedRequestId === request.id 
-                  ? (isDarkMode ? "#00BCD4" : "#0B3866") 
-                  : "transparent",
+                color:
+                  selectedRequestId === request.id
+                    ? "#fff"
+                    : isDarkMode
+                      ? "#00BCD4"
+                      : "#0B3866",
+                backgroundColor:
+                  selectedRequestId === request.id
+                    ? isDarkMode
+                      ? "#00BCD4"
+                      : "#0B3866"
+                    : "transparent",
                 borderColor: isDarkMode ? "#00BCD4" : "#0B3866",
                 "&:hover": {
-                  backgroundColor: selectedRequestId === request.id 
-                    ? (isDarkMode ? "rgba(0, 188, 212, 0.9)" : "rgba(11, 56, 102, 0.9)")
-                    : (isDarkMode ? "rgba(0, 188, 212, 0.1)" : "rgba(11, 56, 102, 0.1)"),
+                  backgroundColor:
+                    selectedRequestId === request.id
+                      ? isDarkMode
+                        ? "rgba(0, 188, 212, 0.9)"
+                        : "rgba(11, 56, 102, 0.9)"
+                      : isDarkMode
+                        ? "rgba(0, 188, 212, 0.1)"
+                        : "rgba(11, 56, 102, 0.1)",
                 },
               }}
-              onClick={() => selectedRequestId === request.id 
-                ? handleClearSelection() 
-                : handleSelectRequest(request.id)
+              onClick={() =>
+                selectedRequestId === request.id
+                  ? handleClearSelection()
+                  : handleSelectRequest(request.id)
               }
             >
               {selectedRequestId === request.id ? "Selected" : "Select"}
@@ -484,7 +511,12 @@ const Pickup: React.FC<PickupProps> = () => {
       </CardContent>
 
       <CardActions className="justify-between bg-gray-50 dark:bg-gray-800 mt-auto">
-        <Chip label="Available" color="success" variant="outlined" />
+        <Chip
+          label="Available"
+          color="success"
+          variant="outlined"
+          sx={{ borderRadius: "8px" }}
+        />
         <Button
           variant="outlined"
           size="small"
@@ -513,30 +545,35 @@ const Pickup: React.FC<PickupProps> = () => {
     </Card>
   );
 
-
   const handlePickupMatch = async (requestId: number, offerId: number) => {
     try {
-      const response = await apiPut('/api/pickup/match', { requestId, offerId });
+      const response = await apiPut("/api/pickup/match", {
+        requestId,
+        offerId,
+      });
       await handleApiResponse(response);
-  
-      showSnackbar('Pickup match successful!', 'success');
+
+      showSnackbar("Pickup match successful!", "success");
       setSelectedRequestId(null); // Clear selection after successful match
       // Optionally refresh data here
       refetchRequests();
       refetchOffers();
     } catch (error) {
-      showSnackbar('Error matching: ' + (error instanceof Error ? error.message : error), 'error');
+      showSnackbar(
+        "Error matching: " + (error instanceof Error ? error.message : error),
+        "error"
+      );
     }
   };
 
   const handleSelectRequest = (requestId: number) => {
     setSelectedRequestId(requestId);
-    showSnackbar('Request selected. Now choose an offer to match.', 'info');
+    showSnackbar("Request selected. Now choose an offer to match.", "info");
   };
 
   const handleClearSelection = () => {
     setSelectedRequestId(null);
-    showSnackbar('Selection cleared.', 'info');
+    showSnackbar("Selection cleared.", "info");
   };
 
   // Search functionality
@@ -564,13 +601,19 @@ const Pickup: React.FC<PickupProps> = () => {
   }, [searchFilters.airport, searchFilters.flightNumber, searchParams]);
 
   // Filter requests based on search criteria
-  const filteredRequests = searchParams 
-    ? requests.filter(request => {
-        const airportMatch = !searchParams.airport || 
-          request.airport.toLowerCase().includes(searchParams.airport.toLowerCase());
-        const flightMatch = !searchParams.flightNumber || 
-          request.flightNumber.toLowerCase().includes(searchParams.flightNumber.toLowerCase());
-        
+  const filteredRequests = searchParams
+    ? requests.filter((request) => {
+        const airportMatch =
+          !searchParams.airport ||
+          request.airport
+            .toLowerCase()
+            .includes(searchParams.airport.toLowerCase());
+        const flightMatch =
+          !searchParams.flightNumber ||
+          request.flightNumber
+            .toLowerCase()
+            .includes(searchParams.flightNumber.toLowerCase());
+
         return airportMatch && flightMatch;
       })
     : requests;
@@ -594,19 +637,33 @@ const Pickup: React.FC<PickupProps> = () => {
 
   // Auto-clear driver search when both fields are empty
   useEffect(() => {
-    if (!driverSearchFilters.airport && !driverSearchFilters.vehicleType && driverSearchParams) {
+    if (
+      !driverSearchFilters.airport &&
+      !driverSearchFilters.vehicleType &&
+      driverSearchParams
+    ) {
       setDriverSearchParams(null);
     }
-  }, [driverSearchFilters.airport, driverSearchFilters.vehicleType, driverSearchParams]);
+  }, [
+    driverSearchFilters.airport,
+    driverSearchFilters.vehicleType,
+    driverSearchParams,
+  ]);
 
   // Filter offers based on search criteria
-  const filteredOffers = driverSearchParams 
-    ? offers.filter(offer => {
-        const airportMatch = !driverSearchParams.airport || 
-          offer.airport.toLowerCase().includes(driverSearchParams.airport.toLowerCase());
-        const vehicleMatch = !driverSearchParams.vehicleType || 
-          offer.vehicleType.toLowerCase().includes(driverSearchParams.vehicleType.toLowerCase());
-        
+  const filteredOffers = driverSearchParams
+    ? offers.filter((offer) => {
+        const airportMatch =
+          !driverSearchParams.airport ||
+          offer.airport
+            .toLowerCase()
+            .includes(driverSearchParams.airport.toLowerCase());
+        const vehicleMatch =
+          !driverSearchParams.vehicleType ||
+          offer.vehicleType
+            .toLowerCase()
+            .includes(driverSearchParams.vehicleType.toLowerCase());
+
         return airportMatch && vehicleMatch;
       })
     : offers;
@@ -618,7 +675,9 @@ const Pickup: React.FC<PickupProps> = () => {
         <Paper
           className="p-6 text-center"
           style={{
-            background: isDarkMode ? muiTheme.palette.background.paper : undefined,
+            background: isDarkMode
+              ? muiTheme.palette.background.paper
+              : undefined,
           }}
         >
           <Typography variant="h6" color="error" className="mb-4">
@@ -657,7 +716,9 @@ const Pickup: React.FC<PickupProps> = () => {
         elevation={0}
         className="mb-8 p-6 "
         style={{
-          background: isDarkMode ? muiTheme.palette.background.paper : undefined,
+          background: isDarkMode
+            ? muiTheme.palette.background.paper
+            : undefined,
         }}
       >
         <Box className="text-center">
@@ -682,7 +743,9 @@ const Pickup: React.FC<PickupProps> = () => {
         elevation={1}
         className="mb-6"
         style={{
-          background: isDarkMode ? muiTheme.palette.background.paper : undefined,
+          background: isDarkMode
+            ? muiTheme.palette.background.paper
+            : undefined,
         }}
       >
         <Tabs
@@ -729,9 +792,14 @@ const Pickup: React.FC<PickupProps> = () => {
         {activeTab === 0 && (
           <Box>
             {/* Search Filters */}
-            <Paper className="mb-6 p-4" style={{
-              background: isDarkMode ? muiTheme.palette.background.paper : undefined,
-            }}>
+            <Paper
+              className="mb-6 p-4"
+              style={{
+                background: isDarkMode
+                  ? muiTheme.palette.background.paper
+                  : undefined,
+              }}
+            >
               <Typography variant="h6" className="mb-4">
                 Search for Requests to Help
               </Typography>
@@ -741,7 +809,12 @@ const Pickup: React.FC<PickupProps> = () => {
                     fullWidth
                     label="Airport"
                     value={searchFilters.airport}
-                    onChange={(e) => setSearchFilters(prev => ({ ...prev, airport: e.target.value }))}
+                    onChange={(e) =>
+                      setSearchFilters((prev) => ({
+                        ...prev,
+                        airport: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., AKL"
                   />
                 </Grid>
@@ -750,7 +823,12 @@ const Pickup: React.FC<PickupProps> = () => {
                     fullWidth
                     label="Flight Number"
                     value={searchFilters.flightNumber}
-                    onChange={(e) => setSearchFilters(prev => ({ ...prev, flightNumber: e.target.value }))}
+                    onChange={(e) =>
+                      setSearchFilters((prev) => ({
+                        ...prev,
+                        flightNumber: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., NZ289"
                   />
                 </Grid>
@@ -762,7 +840,9 @@ const Pickup: React.FC<PickupProps> = () => {
                     sx={{
                       backgroundColor: isDarkMode ? "#00BCD4" : "#0B3866",
                       "&:hover": {
-                        backgroundColor: isDarkMode ? "rgba(0, 188, 212, 0.9)" : "rgba(11, 56, 102, 0.9)",
+                        backgroundColor: isDarkMode
+                          ? "rgba(0, 188, 212, 0.9)"
+                          : "rgba(11, 56, 102, 0.9)",
                       },
                       height: "56px", // Match the default TextField height
                     }}
@@ -783,8 +863,12 @@ const Pickup: React.FC<PickupProps> = () => {
                       borderColor: isDarkMode ? "#00BCD4" : "#0B3866",
                       color: isDarkMode ? "#00BCD4" : "#0B3866",
                       "&:hover": {
-                        borderColor: isDarkMode ? "rgba(0, 188, 212, 0.9)" : "rgba(11, 56, 102, 0.9)",
-                        backgroundColor: isDarkMode ? "rgba(0, 188, 212, 0.1)" : "rgba(11, 56, 102, 0.1)",
+                        borderColor: isDarkMode
+                          ? "rgba(0, 188, 212, 0.9)"
+                          : "rgba(11, 56, 102, 0.9)",
+                        backgroundColor: isDarkMode
+                          ? "rgba(0, 188, 212, 0.1)"
+                          : "rgba(11, 56, 102, 0.1)",
                       },
                       height: "56px", // Match the default TextField height
                     }}
@@ -851,13 +935,17 @@ const Pickup: React.FC<PickupProps> = () => {
                   variant="h6"
                   className="text-gray-600 dark:text-gray-300"
                 >
-                  {searchParams ? "No matching requests found" : "No pickup requests yet"}
+                  {searchParams
+                    ? "No matching requests found"
+                    : "No pickup requests yet"}
                 </Typography>
                 <Typography
                   variant="body2"
                   className="text-gray-500 dark:text-gray-400 mt-2"
                 >
-                  {searchParams ? "Try different search criteria" : "Be the first to request a pickup!"}
+                  {searchParams
+                    ? "Try different search criteria"
+                    : "Be the first to request a pickup!"}
                 </Typography>
               </Paper>
             ) : (
@@ -884,9 +972,14 @@ const Pickup: React.FC<PickupProps> = () => {
         {activeTab === 1 && (
           <Box>
             {/* Search Filters */}
-            <Paper className="mb-6 p-4" style={{
-              background: isDarkMode ? muiTheme.palette.background.paper : undefined,
-            }}>
+            <Paper
+              className="mb-6 p-4"
+              style={{
+                background: isDarkMode
+                  ? muiTheme.palette.background.paper
+                  : undefined,
+              }}
+            >
               <Typography variant="h6" className="mb-4">
                 Search for Driver
               </Typography>
@@ -896,7 +989,12 @@ const Pickup: React.FC<PickupProps> = () => {
                     fullWidth
                     label="Airport"
                     value={driverSearchFilters.airport}
-                    onChange={(e) => setDriverSearchFilters(prev => ({ ...prev, airport: e.target.value }))}
+                    onChange={(e) =>
+                      setDriverSearchFilters((prev) => ({
+                        ...prev,
+                        airport: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., AKL"
                   />
                 </Grid>
@@ -905,7 +1003,12 @@ const Pickup: React.FC<PickupProps> = () => {
                     fullWidth
                     label="Vehicle Type"
                     value={driverSearchFilters.vehicleType}
-                    onChange={(e) => setDriverSearchFilters(prev => ({ ...prev, vehicleType: e.target.value }))}
+                    onChange={(e) =>
+                      setDriverSearchFilters((prev) => ({
+                        ...prev,
+                        vehicleType: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., Sedan"
                   />
                 </Grid>
@@ -973,7 +1076,10 @@ const Pickup: React.FC<PickupProps> = () => {
             {selectedRequestId && (
               <Paper className="mb-4 p-3 bg-blue-50 dark:bg-blue-900">
                 <Box className="flex justify-between items-center">
-                  <Typography variant="body2" className="text-blue-800 dark:text-blue-200">
+                  <Typography
+                    variant="body2"
+                    className="text-blue-800 dark:text-blue-200"
+                  >
                     Request selected. Choose an offer to match.
                   </Typography>
                   <Button
@@ -1010,13 +1116,17 @@ const Pickup: React.FC<PickupProps> = () => {
                   variant="h6"
                   className="text-gray-600 dark:text-gray-300"
                 >
-                  {driverSearchParams ? "No matching drivers found" : "No drivers available yet"}
+                  {driverSearchParams
+                    ? "No matching drivers found"
+                    : "No drivers available yet"}
                 </Typography>
                 <Typography
                   variant="body2"
                   className="text-gray-500 dark:text-gray-400 mt-2"
                 >
-                  {driverSearchParams ? "Try different search criteria" : "Be the first to offer pickup services!"}
+                  {driverSearchParams
+                    ? "Try different search criteria"
+                    : "Be the first to offer pickup services!"}
                 </Typography>
               </Paper>
             ) : (
@@ -1050,7 +1160,9 @@ const Pickup: React.FC<PickupProps> = () => {
       >
         <DialogTitle
           style={{
-            background: isDarkMode ? muiTheme.palette.background.paper : undefined,
+            background: isDarkMode
+              ? muiTheme.palette.background.paper
+              : undefined,
           }}
         >
           {formType === "request"

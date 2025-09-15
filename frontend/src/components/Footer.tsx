@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import useIsDarkMode from "../themes/useIsDarkMode";
 
 interface FooterProps {
   companyName?: string;
@@ -31,6 +32,7 @@ export const Footer: React.FC<FooterProps> = ({
   const { t } = useTranslation();
   const theme = useTheme();
   const currentYear = new Date().getFullYear();
+  const isDarkMode = useIsDarkMode();
 
   const footerLinks = [
     {
@@ -69,7 +71,7 @@ export const Footer: React.FC<FooterProps> = ({
   return (
     <Box 
       component="footer"
-      className="border-t border-gray-200 mt-auto bg-[#CBDDDF]"
+      className="border-t border-gray-200 mt-auto bg-[#CBDDDF] dark:bg-[#1f2937]"
       sx={{ mt: 'auto', color: 'var(--color-primary)' }}
     >
       <Container maxWidth="lg">
@@ -87,21 +89,22 @@ export const Footer: React.FC<FooterProps> = ({
                   component={RouterLink}
                   to="/"
                   className="flex items-center no-underline"
-                  style={{ color: 'var(--color-primary)' }}
-                  sx={{ '&:hover': { color: '#061e4a' } }}
+                 
+                  sx={{ fontFamily: 'PolySans', color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }}
                 >
                   <img
-                    src="/images/logo.png"
+                     src={isDarkMode ? "/images/logo-white.png" : "/images/logo.png"}
                     alt="WingCompanion Logo"
                     style={{ height: 40, marginRight: 12, display: 'inline-block', verticalAlign: 'middle' }}
+           
                   />
                   {companyName}
                 </Link>
               </Typography>
               <Typography 
-                variant="body2" 
+                variant="body1" 
                 className="mb-4"
-                sx={{ color: 'var(--color-primary)' }}
+                sx={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }}
               >
                 {t('footerDescription')}
               </Typography>
@@ -109,20 +112,20 @@ export const Footer: React.FC<FooterProps> = ({
               {/* Contact Info */}
               <Box className="space-y-2">
                 <Box className="flex items-center space-x-2">
-                  <EmailIcon className="w-4 h-4" sx={{ color: 'var(--color-primary)' }} />
-                  <Typography variant="body2" sx={{ color: 'var(--color-primary)' }}>
+                  <EmailIcon className="w-4 h-4" sx={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }} />
+                  <Typography variant="body1" sx={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }}>
                     support@wingcompanion.com
                   </Typography>
                 </Box>
                 <Box className="flex items-center space-x-2">
-                  <PhoneIcon className="w-4 h-4" sx={{ color: 'var(--color-primary)' }} />
-                  <Typography variant="body2" sx={{ color: 'var(--color-primary)' }}>
+                  <PhoneIcon className="w-4 h-4" sx={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }} />
+                  <Typography variant="body1" sx={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }}>
                     +64 21 123 4567
                   </Typography>
                 </Box>
                 <Box className="flex items-center space-x-2">
-                  <LocationIcon className="w-4 h-4" sx={{ color: 'var(--color-primary)' }} />
-                  <Typography variant="body2" sx={{ color: 'var(--color-primary)' }}>
+                  <LocationIcon className="w-4 h-4" sx={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }} />
+                  <Typography variant="body1" sx={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }}>
                     {t('locationNZ')}
                   </Typography>
                 </Box>
@@ -131,17 +134,20 @@ export const Footer: React.FC<FooterProps> = ({
             {/* Footer Links */}
             {footerLinks.map((section) => (
               <Grid item xs={12} md={3} key={section.titleKey}>
-                <Typography variant="subtitle1" className="font-semibold mb-3" sx={{ color: 'var(--color-primary)' }}>
+                <Typography variant="subtitle1" className="font-semibold mb-3" sx={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }}>
                   {t(section.titleKey)}
                 </Typography>
-                <ul className="space-y-2">
+                <ul
+                  className="space-y-2"
+                  style={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }}
+                >
                   {section.links.map((link) => (
                     <li key={link.textKey}>
                       <Link
                         component={RouterLink}
                         to={link.path}
                         className="transition-colors"
-                        style={{ color: 'var(--color-primary)' }}
+                        style={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }}
                         sx={{ '&:hover': { color: '#061e4a' } }}
                       >
                         {t(link.textKey)}
@@ -156,7 +162,7 @@ export const Footer: React.FC<FooterProps> = ({
         <Divider sx={{ borderColor: 'rgba(8,43,109,0.15)', mb: 2 }} />
         {/* Bottom Footer */}
         <Box className="flex flex-col sm:flex-row items-center justify-between py-4">
-          <Typography variant="body2" className="mb-2 sm:mb-0" sx={{ color: 'var(--color-primary)' }}>
+          <Typography variant="body2" className="mb-2 sm:mb-0" sx={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }}>
             © {currentYear} {companyName}. {t('allRightsReserved')}
           </Typography>
           <Box className="flex space-x-2">
@@ -168,7 +174,7 @@ export const Footer: React.FC<FooterProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 className=""
-                sx={{ color: 'var(--color-primary)' }}
+                sx={{ color: isDarkMode ? '#f3f4f6' : 'var(--color-primary)' }}
                 aria-label={social.label}
               >
                 {social.icon}

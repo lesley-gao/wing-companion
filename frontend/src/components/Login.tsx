@@ -17,6 +17,7 @@ import {
   selectAuthLoading,
 } from "../store/slices/authSelectors";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const schema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -28,6 +29,7 @@ const schema = z.object({
 type LoginFormInputs = z.infer<typeof schema>;
 
 const Login: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const error = useAppSelector(selectAuthError);
   const isLoading = useAppSelector(selectAuthLoading);
@@ -79,13 +81,15 @@ const Login: React.FC = () => {
           // Not JSON, use as-is
           errorMsg = result.payload;
         }
-      } else if (typeof result.payload === "object" && typeof result.payload.message === "string") {
+      } else if (
+        typeof result.payload === "object" &&
+        typeof result.payload.message === "string"
+      ) {
         errorMsg = result.payload.message;
       }
     } else if (error) {
       errorMsg = error;
     }
-
 
     if (
       result?.type &&
@@ -116,15 +120,19 @@ const Login: React.FC = () => {
         </Alert>
       </Snackbar>
       <Box
-        maxWidth={400}
+        maxWidth={600}
         mx="auto"
         my={20}
-        p={3}
+        p={10}
         boxShadow={2}
         borderRadius={2}
         bgcolor="background.paper"
       >
-        <Typography variant="h5" mb={2} className="text-center">
+        <Typography
+          variant="h3"
+          mb={2}
+          className="text-center text-gray-900 dark:text-gray-100 mb-10"
+        >
           Login
         </Typography>
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -155,6 +163,41 @@ const Login: React.FC = () => {
           >
             {isLoading ? "Logging in..." : "Login"}
           </Button>
+
+          {/* Prompt for existing users to login */}
+          <Box
+            mb={3}
+            textAlign="center"
+            className="mt-8 flex justify-center items-center"
+          >
+            <Typography
+              variant="body1"
+              sx={{ fontSize: 16, color: "#374151", display: "inline", mr: 1 }}
+              className="dark:text-gray-100"
+            >
+              {t("noAccount", "Don't have an account?")}
+            </Typography>
+            <Typography
+              variant="body1"
+              component="span"
+              onClick={() => navigate("/register")}
+              sx={{
+                fontSize: 16,
+                color: "primary.main",
+                fontWeight: 600,
+                textDecoration: "underline",
+                cursor: "pointer",
+                transition: "transform 0.2s",
+                "&:hover": {
+                  transform: "scale(1.05)",
+                  textDecoration: "underline",
+                },
+              }}
+              className="dark:text-gray-100"
+            >
+              {t("registerNow", "Register now")}
+            </Typography>
+          </Box>
         </form>
       </Box>
     </>
