@@ -54,6 +54,7 @@ interface FlightCompanionProps {}
 // Main Component
 const FlightCompanion: React.FC<FlightCompanionProps> = () => {
   // State Management
+  const [showHelperSearchFilters, setShowHelperSearchFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [showCreateForm, setShowCreateForm] = useState<boolean>(false);
   const [formType, setFormType] = useState<"request" | "offer">("request");
@@ -297,7 +298,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
         <Button
           variant="contained"
           size="small"
-          startIcon={<HelpIcon />}
+          startIcon={<VolunteerActivismIcon />}
           sx={{
             margin: "5px 10px",
             padding: "10px 16px",
@@ -678,8 +679,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
   return (
     <Container maxWidth={false} className="py-20 mb-20 ">
       {/* Header */}
-      <Paper elevation={0} className="mb-8 p-6">
-        <Box className="text-center">
+        <Box className="text-center mb-12 p-6">
           <Typography
             variant="h3"
             component="h1"
@@ -694,11 +694,11 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
             Connect with helpful travelers on your flight route
           </Typography>
         </Box>
-      </Paper>
+  
 
       {/* Navigation Tabs */}
-      <Paper elevation={1} className="mb-6">
-        <Box className="flex items-center justify-between">
+     
+        <Box className="flex items-center justify-between mb-12">
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
@@ -735,46 +735,53 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
               variant="outlined"
               size="medium"
               startIcon={<SearchOutlinedIcon />}
-              onClick={() => setShowSearchFilters((prev) => !prev)}
+              onClick={() => {
+                if (activeTab === 1) {
+                  setShowHelperSearchFilters((prev) => !prev);
+                } else {
+                  setShowSearchFilters((prev) => !prev);
+                }
+              }}
               sx={{
                 padding: "15px 16px",
-                borderColor: isDarkMode ? "#00BCD4" : "#0B3866",
-                color: isDarkMode ? "#00BCD4" : "#0B3866",
+                borderColor: activeTab === 1 ? "#168046" : (isDarkMode ? "#00BCD4" : "#0B3866"),
+                color: activeTab === 1 ? "#168046" : (isDarkMode ? "#00BCD4" : "#0B3866"),
                 "&:hover": {
-                  borderColor: isDarkMode
-                    ? "rgba(0, 188, 212, 0.9)"
-                    : "rgba(11, 56, 102, 0.9)",
-                  backgroundColor: isDarkMode
-                    ? "rgba(0, 188, 212, 0.1)"
-                    : "rgba(11, 56, 102, 0.1)",
+                  borderColor: activeTab === 1
+                    ? "rgba(22, 128, 70, 0.9)"
+                    : (isDarkMode ? "rgba(0, 188, 212, 0.9)" : "rgba(11, 56, 102, 0.9)"),
+                  backgroundColor: activeTab === 1
+                    ? "rgba(22, 128, 70, 0.1)"
+                    : (isDarkMode ? "rgba(0, 188, 212, 0.1)" : "rgba(11, 56, 102, 0.1)"),
                 },
                 height: "56px", // Match the default TextField height
               }}
             >
-              Search for Requests to Help
+              {activeTab === 1 ? "Search for Helper" : "Search for Requests to Help"}
             </Button>
+
             <Button
               variant="contained"
               size="large"
               startIcon={<AddIcon />}
               onClick={handleOpenForm}
               sx={{
-                backgroundColor: isDarkMode ? "#00BCD4" : "#0B3866",
+                backgroundColor: activeTab === 1 ? "#168046" : (isDarkMode ? "#00BCD4" : "#0B3866"),
                 "&:hover": {
-                  backgroundColor: isDarkMode
-                    ? "rgba(0, 188, 212, 0.9)"
-                    : "rgba(11, 56, 102, 0.9)",
+                  backgroundColor: activeTab === 1
+                    ? "rgba(22, 128, 70, 0.9)"
+                    : (isDarkMode ? "rgba(0, 188, 212, 0.9)" : "rgba(11, 56, 102, 0.9)"),
                 },
                 height: "56px",
                 marginLeft: 1,
               }}
               className="px-8 py-3 text-white"
             >
-              Request Help
+              {activeTab === 1 ? "Offer to Help" : "Request Help"}
             </Button>
           </Box>
         </Box>
-      </Paper>
+ 
 
       {/* Content */}
       <Box className="min-h-96">
@@ -791,7 +798,7 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
                 {showSearchFilters && (
                   <Paper className="mb-6 p-4">
                     <Typography variant="h6" className="mb-4">
-                      Search for Requests to Help
+                      Search for Helper
                     </Typography>
                     <Grid container spacing={2} alignItems="end">
                       <Grid item xs={12} sm={3}>
@@ -936,101 +943,86 @@ const FlightCompanion: React.FC<FlightCompanionProps> = () => {
             {activeTab === 1 && (
               <Box>
                 {/* Search Filters */}
-                <Paper className="mb-6 p-4">
-                  <Typography variant="h6" className="mb-4">
-                    Search for Helper
-                  </Typography>
-                  <Grid container spacing={2} alignItems="end">
-                    <Grid item xs={12} sm={3}>
-                      <TextField
-                        fullWidth
-                        label="Flight Number"
-                        value={helperSearchFilters.flightNumber}
-                        onChange={(e) =>
-                          setHelperSearchFilters((prev) => ({
-                            ...prev,
-                            flightNumber: e.target.value,
-                          }))
-                        }
-                        placeholder="e.g., NZ289"
-                      />
+                {showHelperSearchFilters && (
+                  <Paper className="mb-6 p-4">
+                    <Typography variant="h6" className="mb-4">
+                      Search for Helper
+                    </Typography>
+                    <Grid container spacing={2} alignItems="end">
+                      <Grid item xs={12} sm={3}>
+                        <TextField
+                          fullWidth
+                          label="Flight Number"
+                          value={helperSearchFilters.flightNumber}
+                          onChange={(e) =>
+                            setHelperSearchFilters((prev) => ({
+                              ...prev,
+                              flightNumber: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g., NZ289"
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <TextField
+                          fullWidth
+                          label="Airport"
+                          value={helperSearchFilters.airport}
+                          onChange={(e) =>
+                            setHelperSearchFilters((prev) => ({
+                              ...prev,
+                              airport: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g., AKL"
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <Button
+                          variant="contained"
+                          fullWidth
+                          onClick={handleHelperSearch}
+                          sx={{
+                            backgroundColor: "#168046",
+                            "&:hover": {
+                              backgroundColor: "rgba(22, 128, 70, 0.9)",
+                            },
+                            height: "56px",
+                          }}
+                        >
+                          Search Helpers
+                        </Button>
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => {
+                            setHelperSearchFilters({
+                              flightNumber: "",
+                              airport: "",
+                            });
+                            setHelperSearchParams(null);
+                            showSnackbar("Search cleared", "info");
+                          }}
+                          sx={{
+                            borderColor: "#168046",
+                            color: "#168046",
+                            "&:hover": {
+                              borderColor: "rgba(22, 128, 70, 0.9)",
+                              backgroundColor: "rgba(22, 128, 70, 0.1)",
+                            },
+                            height: "56px",
+                          }}
+                        >
+                          Clear Search
+                        </Button>
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12} sm={3}>
-                      <TextField
-                        fullWidth
-                        label="Airport"
-                        value={helperSearchFilters.airport}
-                        onChange={(e) =>
-                          setHelperSearchFilters((prev) => ({
-                            ...prev,
-                            airport: e.target.value,
-                          }))
-                        }
-                        placeholder="e.g., AKL"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                      <Button
-                        variant="contained"
-                        fullWidth
-                        onClick={handleHelperSearch}
-                        sx={{
-                          backgroundColor: "#168046",
-                          "&:hover": {
-                            backgroundColor: "rgba(22, 128, 70, 0.9)",
-                          },
-                          height: "56px",
-                        }}
-                      >
-                        Search Helpers
-                      </Button>
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                      <Button
-                        variant="outlined"
-                        fullWidth
-                        onClick={() => {
-                          setHelperSearchFilters({
-                            flightNumber: "",
-                            airport: "",
-                          });
-                          setHelperSearchParams(null);
-                          showSnackbar("Search cleared", "info");
-                        }}
-                        sx={{
-                          borderColor: "#168046",
-                          color: "#168046",
-                          "&:hover": {
-                            borderColor: "rgba(22, 128, 70, 0.9)",
-                            backgroundColor: "rgba(22, 128, 70, 0.1)",
-                          },
-                          height: "56px",
-                        }}
-                      >
-                        Clear Search
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Paper>
+                  </Paper>
+                )}
 
                 {/* Action Button */}
-                <Box className="text-center mb-8">
-                  <Button
-                    variant="contained"
-                    size="large"
-                    startIcon={<AddIcon />}
-                    onClick={handleOpenForm}
-                    sx={{
-                      backgroundColor: "#168046",
-                      "&:hover": {
-                        backgroundColor: "rgba(22, 128, 70, 0.9)",
-                      },
-                    }}
-                    className="px-8 py-3 my-3 text-white"
-                  >
-                    Offer to Help
-                  </Button>
-                </Box>
                 {selectedRequestId && (
                   <Paper className="mb-4 p-3 bg-blue-50 dark:bg-blue-900">
                     <Box className="flex justify-between items-center">

@@ -712,80 +712,59 @@ const Pickup: React.FC<PickupProps> = () => {
   return (
     <Container maxWidth={false} className="py-20 mb-20">
       {/* Header */}
-      <Paper
-        elevation={0}
-        className="mb-8 p-6 "
-        style={{
-          background: isDarkMode
-            ? muiTheme.palette.background.paper
-            : undefined,
-        }}
-      >
-        <Box className="text-center">
-          <Typography
-            variant="h3"
-            component="h1"
-            className="font-bold text-gray-900 dark:text-gray-100 mb-2"
-          >
-            Airport Pickup Service
-          </Typography>
-          <Typography
-            variant="body1"
-            className="text-gray-600 dark:text-gray-300"
-          >
-            Connect with reliable drivers for airport transfers
-          </Typography>
-        </Box>
-      </Paper>
+
+      <Box className="text-center mb-12 p-6 ">
+        <Typography
+          variant="h3"
+          component="h1"
+          className="font-bold text-gray-900 dark:text-gray-100 mb-2"
+        >
+          Airport Pickup Service
+        </Typography>
+        <Typography
+          variant="body1"
+          className="text-gray-600 dark:text-gray-300"
+        >
+          Connect with reliable drivers for airport transfers
+        </Typography>
+      </Box>
 
       {/* Navigation Tabs */}
-      <Paper
-        elevation={1}
-        className="mb-6"
-        style={{
-          background: isDarkMode
-            ? muiTheme.palette.background.paper
-            : undefined,
+      <Tabs
+        value={activeTab}
+        onChange={handleTabChange}
+        className="border-b border-gray-200 mb-12"
+        textColor="primary"
+        indicatorColor="primary"
+        sx={{
+          "& .MuiTabs-indicator": isDarkMode
+            ? { backgroundColor: "#00BCD4" }
+            : {},
         }}
       >
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          className="border-b border-gray-200"
-          textColor="primary"
-          indicatorColor="primary"
+        <Tab
+          icon={
+            <FlightIcon style={{ color: isDarkMode ? "#00BCD4" : undefined }} />
+          }
+          label={`Pickup Requests (${requests.length})`}
+          className="font-medium"
           sx={{
-            "& .MuiTabs-indicator": isDarkMode
-              ? { backgroundColor: "#00BCD4" }
-              : {},
+            color: isDarkMode ? "#fff" : undefined,
+            "&.Mui-selected": isDarkMode ? { color: "#00BCD4" } : {},
           }}
-        >
-          <Tab
-            icon={
-              <FlightIcon
-                style={{ color: isDarkMode ? "#00BCD4" : undefined }}
-              />
-            }
-            label={`Pickup Requests (${requests.length})`}
-            className="font-medium"
-            sx={{
-              color: isDarkMode ? "#fff" : undefined,
-              "&.Mui-selected": isDarkMode ? { color: "#00BCD4" } : {},
-            }}
-          />
-          <Tab
-            icon={
-              <TaxiIcon style={{ color: isDarkMode ? "#00BCD4" : undefined }} />
-            }
-            label={`Available Drivers (${offers.length})`}
-            className="font-medium"
-            sx={{
-              color: isDarkMode ? "#fff" : undefined,
-              "&.Mui-selected": isDarkMode ? { color: "#00BCD4" } : {},
-            }}
-          />
-        </Tabs>
-      </Paper>
+        />
+        <Tab
+          icon={
+            <TaxiIcon style={{ color: isDarkMode ? "#00BCD4" : undefined }} />
+          }
+          label={`Available Drivers (${offers.length})`}
+          className="font-medium"
+          sx={{
+            color: isDarkMode ? "#fff" : undefined,
+            "&.Mui-selected": isDarkMode ? { color: "#00BCD4" } : {},
+          }}
+        />
+      </Tabs>
 
       {/* Content */}
       <Box className="min-h-96">
